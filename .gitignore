@@ -3,8 +3,8 @@ Modos-de-funcionamento.jpg
 Dados diversos.xlsx
 Compras.txt
 Artigos/
-*.jpg
-*.slx
+SOFTWARE/FlightControllerFuzzy/*.jpg
+SOFTWARE/FlightControllerFuzzy/*.slx
 SOFTWARE/FlightControllerFuzzy/Ganhos
-*.xlsx
+SOFTWARE/FlightControllerFuzzy/*.xlsx
 SOFTWARE/FlightControllerFuzzy/Reglas.fis
