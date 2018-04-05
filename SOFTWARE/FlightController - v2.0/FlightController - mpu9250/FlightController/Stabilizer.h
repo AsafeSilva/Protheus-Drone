@@ -30,7 +30,7 @@ public:
 	static void rollUpdateSetPoint(float setPoint);
 	static void rollUpdateInput(float input);
 
-	static void resetPID();
+	static void reset();
 
 	static void stabilize();
 };

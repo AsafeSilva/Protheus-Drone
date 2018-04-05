@@ -117,9 +117,9 @@ void loop() {
 
 	droneChangeState(ThrottleChannel.timer, ThrottleChannel.MIN, ThrottleChannel.MAX, YawChannel.timer, YawChannel.MIN, YawChannel.MAX);
 
-	// If drone ARMED, Stop motors and resetPID
+	// If drone DISARMED, Stop motors and resetPID
 	if(DroneState == DISARMED){
-		Stabilizer::resetPID();
+		Stabilizer::reset();
 		Motors::stop();
 
 		printRadioChannels();
@@ -199,7 +199,7 @@ void loop() {
 			DataToSend[SendID::M3_VEL] = *(Motors::getPercentPower()+2);
 			DataToSend[SendID::M4_VEL] = *(Motors::getPercentPower()+3);
 		}else{
-			Stabilizer::resetPID();
+			Stabilizer::reset();
 			Motors::stop();
 		}
 

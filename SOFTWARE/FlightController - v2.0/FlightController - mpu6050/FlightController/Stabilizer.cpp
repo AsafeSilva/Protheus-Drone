@@ -56,7 +56,7 @@ void Stabilizer::rollUpdateInput(float input){
 	pidRoll.addInput(input);
 }
 
-void Stabilizer::resetPID(){
+void Stabilizer::reset(){
 	pidThrottle.reset();
 	pidYaw.reset();
 	pidPitch.reset();
