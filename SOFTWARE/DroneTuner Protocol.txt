@@ -1,0 +1,56 @@
+>>> --- DRONE TUNER PROTOCOL --- <<<
+
+|--------------------------------|
+|   Arduino  --->   Computer 	 |
+|--------------------------------|
+
+- Yaw
+INPUT, SETPOINT
+
+- Pitch
+INPUT, SETPOINT
+
+- Roll
+INPUT, SETPOINT
+
+- Motors
+PWM (X4)
+
+<<< PROTOCOL >>>
+
+Yaw 	INPUT		"YI___\n"
+Yaw 	SETPOINT	"YS___\n"
+Pitch 	INPUT		"PI___\n"
+Pitch 	SETPOINT	"PS___\n"
+Roll 	INPUT		"RI___\n"
+Roll 	SETPOINT	"RS___\n"
+Motors	M1		"A___\n"
+Motors	M2		"B___\n"
+Motors	M3		"C___\n"
+Motors	M4		"D___\n"
+
+
+|--------------------------------|
+|  Computer   --->    Arduino	 |
+|--------------------------------|
+
+- Yaw	(PID constants)
+KP, KI, KD
+
+- Pitch (PID constants)
+KP, KI, KD
+
+- Roll (PID constants)
+KP, KI, KD
+
+<<< PROTOCOL >>>
+
+Yaw 	KP		"YP___\n"
+Yaw 	KI		"YI___\n"
+Yaw 	KD		"YD___\n"
+Pitch 	KP		"PP___\n"
+Pitch 	KI		"PI___\n"
+Pitch 	KD		"PD___\n"
+Roll 	KP		"RP___\n"
+Roll 	KI		"RI___\n"
+Roll 	KD		"RD___\n"

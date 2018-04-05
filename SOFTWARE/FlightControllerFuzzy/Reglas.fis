@@ -1,0 +1,45 @@
+[System]
+Name='Reglas'
+Type='mamdani'
+Version=2.0
+NumInputs=1
+NumOutputs=1
+NumRules=7
+AndMethod='min'
+OrMethod='max'
+ImpMethod='min'
+AggMethod='max'
+DefuzzMethod='centroid'
+
+[Input1]
+Name='input1'
+Range=[-1476 1476]
+NumMFs=7
+MF1='ENA':'trapmf',[-1476 -1476 -1148 -983.7]
+MF2='EZ':'trapmf',[-114.8 -32.8 32.8 114.8]
+MF3='EPA':'trapmf',[983.7 1148 1476 1476]
+MF4='ENB':'trapmf',[-574 -410 -246 0]
+MF5='EPB':'trapmf',[0 246 410 574]
+MF6='ENM':'trapmf',[-1148 -983.7 -492 -328]
+MF7='EPM':'trapmf',[328 492 983.7 1148]
+
+[Output1]
+Name='output1'
+Range=[-205 205]
+NumMFs=7
+MF1='PNA':'trapmf',[-205 -205 -160 -120]
+MF2='PZ':'trapmf',[-15 -5 5 15]
+MF3='PPA':'trapmf',[120 160 205 205]
+MF4='PNB':'trapmf',[-90 -60 -30 -10]
+MF5='PPB':'trapmf',[10 30 60 90]
+MF6='PNM':'trapmf',[-140 -120 -90 -60]
+MF7='PPM':'trapmf',[60 90 120 140]
+
+[Rules]
+1, 3 (1) : 1
+2, 2 (1) : 1
+3, 1 (1) : 1
+4, 5 (1) : 1
+5, 4 (1) : 1
+6, 7 (1) : 1
+7, 6 (1) : 1
