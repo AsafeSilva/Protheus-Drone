@@ -3,7 +3,7 @@
  --- Protheus Drone ---
 
 > Link do projeto no GitHub:
-github.com/AsafeSilva/...
+github.com/AsafeSilva/Protheus-Drone
 
 > Autores:
 

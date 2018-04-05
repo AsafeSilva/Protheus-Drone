@@ -3,7 +3,7 @@
  --- Protheus Drone ---
 
 > Link do projeto no GitHub:
-github.com/AsafeSilva/...
+github.com/AsafeSilva/Protheus-Drone
 
 > Autores:
 
@@ -13,13 +13,13 @@ github.com/AsafeSilva/...
 
 > Data de Criação:	18/08/2017
 
-> Última modificação:	05/03/2018
+> Última modificação:	16/02/2018
 
 > Descrição do projeto:
 
 	<> Hardware
 		- Arduino DUE [ARM Cortex-M3]
-		- MPU9250 [Acelerômetro + Giroscópio + Magnetrômetro]
+		- MPU6050 [Acelerômetro + Giroscópio]
 		- BMP 180 [Barômetro]
 		- Rádio [Receptor]
 		- Bluetooth
@@ -28,9 +28,13 @@ github.com/AsafeSilva/...
 	<> Software
 		- 1° Passo		"Leitura do rádio controle"
 		- 2° Passo		"Leitura do AHRS (Attitude and Heading Reference System)"
-		- 3° Passo		"Cálculo do Fuzzy (Yaw - Pitch - Roll)"
+		- 3° Passo		"Cálculo dos PID's (Yaw - Pitch - Roll)"
 		- 4° Passo		"Atualizar velocidades dos motores"
-		- 5° Passo		"Comunicação com o sintonizador"
+		- 5° Passo		"Comunicação com o sintonizador PID"
+	<> Dependences
+		- MPU6050 [github.com/jrowberg/i2cdevlib/tree/master/Arduino/MPU6050]
+		- Fuzzy [github.com/zerokol/eFLL]
+		- Kalman [github.com/TKJElectronics/KalmanFilter]	
 
 > Informações adicionais:
 
@@ -46,14 +50,14 @@ IFPE Campus Caruaru, com a Universidad de Chile, INACAP.
 // -- Libraries
 #include <Wire.h>
 #include <MPU6050.h>
-#include <Fuzzy.h>
+#include <Kalman.h>
 
 // -- Modules
 #include "InterfaceComm.h"
 #include "RadioControl.h"
 #include "Motors.h"
-#include "Kalman.h"
 #include "AHRS.h"
+#include "PID.h"
 #include "Stabilizer.h"
 
 
@@ -64,7 +68,7 @@ void setup() {
 	// 
 	pinMode(PIN_LEVEL_CONVERTER, OUTPUT);
 	digitalWrite(PIN_LEVEL_CONVERTER, 0);
-	delay(400);
+	delay(100);
 	digitalWrite(PIN_LEVEL_CONVERTER, 1);
 
 	// 
@@ -115,7 +119,7 @@ void loop() {
 
 	droneChangeState(ThrottleChannel.timer, ThrottleChannel.MIN, ThrottleChannel.MAX, YawChannel.timer, YawChannel.MIN, YawChannel.MAX);
 
-	// If drone DISARMED, Stop motors
+	// If drone DISARMED, Stop motors and resetPID
 	if(DroneState == DISARMED){
 		Stabilizer::reset();
 		Motors::stop();
@@ -161,7 +165,6 @@ void loop() {
 		rollSetPoint = (rollSetPoint - AHRS::getRoll() * 49.2f) / 3.0f; 
 		yawSetPoint /= 3.0f;
 
-
 		// === LOAD DATA TO INTERFACE
 		DataToSend[SendID::YAW_IN] = AHRS::getGyroYaw();
 		DataToSend[SendID::YAW_SET] = yawSetPoint;
@@ -174,7 +177,7 @@ void loop() {
 		// If drone is armed AND throttle is greater than 2%...
 		if((DroneState == ARMED) && 
 			(ThrottleChannel.timer > ThrottleChannel.MIN + (ThrottleChannel.MAX - ThrottleChannel.MIN)*0.02)){
-		
+	
 			// === CALCULATE PID
 			Stabilizer::throttleUpdateSetPoint(throttleSetPoint);
 
@@ -199,7 +202,6 @@ void loop() {
 			Motors::stop();
 		}
 
-
 		// === SEND DATA TO INTERFACE
 		SendDataToInterface();
 	}
@@ -211,16 +213,15 @@ BT_Event(){
 
 	if(ReceiveInterfaceData()){
 
-		if(ID == ReceiveID::KP_YAW)				Stabilizer::yaw.setKP(DataReceived[ReceiveID::KP_YAW]);
-		else if(ID == ReceiveID::KI_YAW)		Stabilizer::yaw.setKI(DataReceived[ReceiveID::KI_YAW]);
-		else if(ID == ReceiveID::KD_YAW)		Stabilizer::yaw.setKD(DataReceived[ReceiveID::KD_YAW]);
-		else if(ID == ReceiveID::KP_PITCH)		Stabilizer::pitch.kP = DataReceived[ReceiveID::KP_PITCH];
-		else if(ID == ReceiveID::KI_PITCH)		Stabilizer::pitch.kI = DataReceived[ReceiveID::KI_PITCH];
-		else if(ID == ReceiveID::KD_PITCH)		Stabilizer::pitch.kD = DataReceived[ReceiveID::KD_PITCH];
-		else if(ID == ReceiveID::KP_ROLL)		Stabilizer::roll.kP = DataReceived[ReceiveID::KP_ROLL];
-		else if(ID == ReceiveID::KI_ROLL)		Stabilizer::roll.kI = DataReceived[ReceiveID::KI_ROLL];
-		else if(ID == ReceiveID::KD_ROLL)		Stabilizer::roll.kD = DataReceived[ReceiveID::KD_ROLL];
-		
+		if(ID == ReceiveID::KP_YAW)				Stabilizer::pidYaw.setKP(DataReceived[ReceiveID::KP_YAW]);
+		else if(ID == ReceiveID::KI_YAW)		Stabilizer::pidYaw.setKI(DataReceived[ReceiveID::KI_YAW]);
+		else if(ID == ReceiveID::KD_YAW)		Stabilizer::pidYaw.setKD(DataReceived[ReceiveID::KD_YAW]);
+		else if(ID == ReceiveID::KP_PITCH)		Stabilizer::pidPitch.setKP(DataReceived[ReceiveID::KP_PITCH]);
+		else if(ID == ReceiveID::KI_PITCH)		Stabilizer::pidPitch.setKI(DataReceived[ReceiveID::KI_PITCH]);
+		else if(ID == ReceiveID::KD_PITCH)		Stabilizer::pidPitch.setKD(DataReceived[ReceiveID::KD_PITCH]);
+		else if(ID == ReceiveID::KP_ROLL)		Stabilizer::pidRoll.setKP(DataReceived[ReceiveID::KP_ROLL]);
+		else if(ID == ReceiveID::KI_ROLL)		Stabilizer::pidRoll.setKI(DataReceived[ReceiveID::KI_ROLL]);
+		else if(ID == ReceiveID::KD_ROLL)		Stabilizer::pidRoll.setKD(DataReceived[ReceiveID::KD_ROLL]);
 	}
 
 }

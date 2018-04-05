@@ -3,7 +3,7 @@
  --- Protheus Drone ---
 
 > Link do projeto no GitHub:
-github.com/AsafeSilva/...
+github.com/AsafeSilva/Protheus-Drone
 
 > Autores:
 
@@ -13,13 +13,13 @@ github.com/AsafeSilva/...
 
 > Data de Criação:	18/08/2017
 
-> Última modificação:	16/02/2018
+> Última modificação:	08/12/2017
 
 > Descrição do projeto:
 
 	<> Hardware
 		- Arduino DUE [ARM Cortex-M3]
-		- MPU6050 [Acelerômetro + Giroscópio]
+		- MPU9250 [Acelerômetro + Giroscópio + Magnetrômetro]
 		- BMP 180 [Barômetro]
 		- Rádio [Receptor]
 		- Bluetooth
@@ -28,9 +28,12 @@ github.com/AsafeSilva/...
 	<> Software
 		- 1° Passo		"Leitura do rádio controle"
 		- 2° Passo		"Leitura do AHRS (Attitude and Heading Reference System)"
-		- 3° Passo		"Cálculo dos PID's (Yaw - Pitch - Roll)"
+		- 3° Passo		"Cálculo dos PID's (Throttle - Yaw - Pitch - Roll)"
 		- 4° Passo		"Atualizar velocidades dos motores"
 		- 5° Passo		"Comunicação com o sintonizador PID"
+	<> Dependences
+		- MPU9250 [github.com/sparkfun/MPU-9250_Breakout]
+		- Kalman [github.com/TKJElectronics/KalmanFilter]
 
 > Informações adicionais:
 
@@ -45,14 +48,13 @@ IFPE Campus Caruaru, com a Universidad de Chile, INACAP.
 
 // -- Libraries
 #include <Wire.h>
-#include <MPU6050.h>
-#include <SFE_BMP180.h>
+#include <MPU9250.h>
+#include <Kalman.h>
 
 // -- Modules
 #include "InterfaceComm.h"
 #include "RadioControl.h"
 #include "Motors.h"
-#include "Kalman.h"
 #include "AHRS.h"
 #include "PID.h"
 #include "Stabilizer.h"
@@ -112,6 +114,7 @@ void setup() {
 }
 
 
+
 void loop() {
 
 	droneChangeState(ThrottleChannel.timer, ThrottleChannel.MIN, ThrottleChannel.MAX, YawChannel.timer, YawChannel.MIN, YawChannel.MAX);
@@ -120,6 +123,9 @@ void loop() {
 	if(DroneState == DISARMED){
 		Stabilizer::reset();
 		Motors::stop();
+
+		printRadioChannels();
+
 	}else if(DroneState == ESC_CALIBRATION){
 		float throttle = mapFloat(ThrottleChannel.timer, ThrottleChannel.MIN, ThrottleChannel.MAX, MIN_DUTY_CYCLE, MAX_DUTY_CYCLE);
 		uint32_t powers[] = {throttle, throttle, throttle, throttle};
@@ -146,7 +152,7 @@ void loop() {
 		// Dead band in pitch and roll (+/- 8)
 		float yawSetPoint = 0, pitchSetPoint = 0, rollSetPoint = 0;
 
-		if(ThrottleChannel.timer > (ThrottleChannel.MIN + (ThrottleChannel.MAX - ThrottleChannel.MIN)*0.2)){
+		if(ThrottleChannel.timer > (ThrottleChannel.MIN + (ThrottleChannel.MAX - ThrottleChannel.MIN)*0.4)){
 			if(yawControl < 1492) yawSetPoint = yawControl - 1492;
 			else if(yawControl > 1508) yawSetPoint = yawControl - 1508;
 		}

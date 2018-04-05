@@ -4,9 +4,7 @@
 
 #include <Wire.h>
 #include <MPU6050.h>
-#include <SFE_BMP180.h>
-
-#include "Kalman.h"
+#include <Kalman.h>
 
 #include "_config.h"
 #include "_utils.h"
