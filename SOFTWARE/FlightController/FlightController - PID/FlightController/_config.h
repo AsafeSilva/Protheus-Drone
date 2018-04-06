@@ -6,7 +6,7 @@
 // 
 // Project
 // 
-#define PROJECT_NAME	F("\nProtheus Drone v2.0\n")
+#define PROJECT_NAME	F("\nProtheus Drone vPID\n")
 
 
 //

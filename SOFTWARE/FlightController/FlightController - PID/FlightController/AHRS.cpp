@@ -63,9 +63,9 @@ bool AHRS::begin(){
 	}
 
 	AHRS::GyroCalibrate();
-	AHRS::AccelCalibrate();	
-	accelPitchBias = -0.84;
-	accelRollBias = -2.62;
+	AHRS::AccelCalibrate();
+	accelPitchBias = -1.60;
+	accelRollBias = -1.11;
 
 	// Set starting angle
 	outCompPitch = accelPitch - accelPitchBias;

@@ -342,17 +342,22 @@ void calibrateRadio(){
 		if (SwitchChannel.timer < SwitchChannel.MIN) SwitchChannel.MIN = SwitchChannel.timer;
 		if (SwitchChannel.timer > SwitchChannel.MAX) SwitchChannel.MAX = SwitchChannel.timer;
 	
-		LOG((millis() - now) % 1000 == 0 ? '.' : '\0');
+		LOG((millis() - now) % 1000 == 0 ? "." : "\0");
 		delay(100);
 	}
 	LOG(NEW_LINE);
 
 	LOGln(F("--- Calibration values ---"));
-	LOG(F("CH1 -->   MIN: ")); LOG(RollChannel.MIN); LOG(F("   MAX: ")); LOGln(RollChannel.MAX);
-	LOG(F("CH2 -->   MIN: ")); LOG(PitchChannel.MIN); LOG(F("   MAX: ")); LOGln(PitchChannel.MAX);
-	LOG(F("CH3 -->   MIN: ")); LOG(ThrottleChannel.MIN); LOG(F("   MAX: ")); LOGln(ThrottleChannel.MAX);
-	LOG(F("CH4 -->   MIN: ")); LOG(YawChannel.MIN); LOG(F("   MAX: ")); LOGln(YawChannel.MAX);
-	LOG(F("CH5 -->   MIN: ")); LOG(SwitchChannel.MIN); LOG(F("   MAX: ")); LOGln(SwitchChannel.MAX);
+	LOG(F("RollChannel.MIN = "));	LOG(RollChannel.MIN);	LOGln(";");
+	LOG(F("RollChannel.MAX = "));	LOG(RollChannel.MAX);	LOGln(";");
+	LOG(F("PitchChannel.MIN = "));	LOG(PitchChannel.MIN);	LOGln(";");	
+	LOG(F("PitchChannel.MAX = "));	LOG(PitchChannel.MAX);	LOGln(";");
+	LOG(F("ThrottleChannel.MIN = "));	LOG(ThrottleChannel.MIN);	LOGln(";");
+	LOG(F("ThrottleChannel.MAX = "));	LOG(ThrottleChannel.MAX);	LOGln(";");
+	LOG(F("YawChannel.MIN = "));	LOG(YawChannel.MIN);	LOGln(";");
+	LOG(F("YawChannel.MAX = "));	LOG(YawChannel.MAX);	LOGln(";");
+	LOG(F("SwitchChannel.MIN = "));	LOG(SwitchChannel.MIN);	LOGln(";");
+	LOG(F("SwitchChannel.MAX = "));	LOG(SwitchChannel.MAX);	LOGln(";");
 	LOG(NEW_LINE);
 }
 
@@ -382,11 +387,16 @@ void RadioControl_begin(){
 #ifdef CALIBRATE_RADIO
 	calibrateRadio();
 #else
-	RollChannel.MIN = 41158;	RollChannel.MAX = 75804;
-	PitchChannel.MIN = 41180;	PitchChannel.MAX = 77020;
-	ThrottleChannel.MIN = 41220;	ThrottleChannel.MAX = 76029;
-	YawChannel.MIN = 41261;	YawChannel.MAX = 76318;
-	SwitchChannel.MIN = 41053;	SwitchChannel.MAX = 41058;
+	RollChannel.MIN = 41198;
+	RollChannel.MAX = 75870;
+	PitchChannel.MIN = 41238;
+	PitchChannel.MAX = 77046;
+	ThrottleChannel.MIN = 41278;
+	ThrottleChannel.MAX = 76141;
+	YawChannel.MIN = 41321;
+	YawChannel.MAX = 76428;
+	SwitchChannel.MIN = 41217;
+	SwitchChannel.MAX = 82521;
 #endif
 	
 
