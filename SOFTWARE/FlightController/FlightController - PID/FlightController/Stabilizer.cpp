@@ -74,11 +74,13 @@ void Stabilizer::stabilize(){
 	float outPitch = pidPitch.compute(dt);
 	float outRoll = pidRoll.compute(dt);
 
+	uint32_t m1 = outThrottle + outPitch;
+	uint32_t m2 = outThrottle - outRoll;
+	uint32_t m3 = outThrottle - outPitch;
+	uint32_t m4 = outThrottle + outRoll;
+
 	uint32_t powers[] = {
-		outThrottle - outYaw + outRoll,
-		outThrottle + outYaw - outPitch,
-		outThrottle - outYaw - outRoll,
-		outThrottle + outYaw + outPitch
+		m1, m2, m3, m4
 	};
 
 	Motors::setPower(powers);

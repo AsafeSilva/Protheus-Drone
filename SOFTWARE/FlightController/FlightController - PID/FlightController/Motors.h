@@ -9,7 +9,7 @@
 // PWM PROPERTIES
 // 
 // OBS: 1bit of Duty cycle = 4,88us
-#define MIN_DUTY_2FLY	204 
+#define MIN_DUTY_2FLY	242 
 #define MIN_DUTY_CYCLE	204			// ~1000 us of duty cycle - 204
 #define MAX_DUTY_CYCLE	409			// ~2000 us of duty cycle - 409
 #define RESOLUTION	12

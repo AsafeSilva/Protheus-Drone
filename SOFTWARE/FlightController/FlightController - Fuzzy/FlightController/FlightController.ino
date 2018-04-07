@@ -198,9 +198,11 @@ void loop() {
 			DataToSend[SendID::M2_VEL] = *(Motors::getPercentPower()+1);
 			DataToSend[SendID::M3_VEL] = *(Motors::getPercentPower()+2);
 			DataToSend[SendID::M4_VEL] = *(Motors::getPercentPower()+3);
-		}else{
+		}else if(DroneState == ARMED){
 			Stabilizer::reset();
-			Motors::stop();
+			
+			uint32_t powers[] = {MIN_DUTY_2FLY, MIN_DUTY_2FLY, MIN_DUTY_2FLY, MIN_DUTY_2FLY};
+			Motors::setPower(powers);
 		}
 
 

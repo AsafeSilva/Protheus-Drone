@@ -22,8 +22,8 @@ void Stabilizer::begin(){
 
 	// throttle.setParameters(0, 0, 0);
 	// yaw.setParameters(0, 0, 0);
-	pitch.kP = 0;	pitch.kI = 0;	pitch.kD = 0;
-	roll.kP = 0;	roll.kI = 0;	roll.kD = 0;
+	pitch.kP = 0.15f;	pitch.kI = 0.013f;	pitch.kD = 0.015f;
+	roll.kP = 0.15f;	roll.kI = 0.013f;	roll.kD = 0.015f;
 
 	fuzzyPitchInit();
 	fuzzyRollInit();
@@ -83,34 +83,16 @@ void Stabilizer::stabilize(){
 	float outPitch = computesFuzzyPID(fuzzyPitch, &pitch, dt);
 	float outRoll = computesFuzzyPID(fuzzyRoll, &roll, dt);
 
-	uint32_t m1 = outThrottle - outRoll;
-	uint32_t m2 = outThrottle;
-	uint32_t m3 = outThrottle + outRoll;
-	uint32_t m4 = outThrottle;
+	uint32_t m1 = outThrottle + outPitch;
+	uint32_t m2 = outThrottle - outRoll;
+	uint32_t m3 = outThrottle - outPitch;
+	uint32_t m4 = outThrottle + outRoll;
 
 	uint32_t powers[] = {
-		m1, 0, m3, 0
+		m1, m2, m3, m4
 	};
 
 	Motors::setPower(powers);
-
-
-	// float error = pitchSetPoint - pitchInput; 
-
-	// fuzzyPitch->setInput(1, error);
-	// fuzzyPitch->fuzzify();
-	// float outPitchFuzzy = fuzzyPitch->defuzzify(1) * pidRoll.getKP();
-
-	// float outPitchPID = pidPitch.compute();
- 
-	// uint32_t powers[] = {
-	// 	0,
-	// 	outThrottle + outPitchFuzzy - outPitchPID,
-	// 	0,
-	// 	outThrottle - outPitchFuzzy + outPitchPID
-	// };
-
-	// Motors::setPower(powers);
 
 }
 
@@ -136,7 +118,7 @@ float Stabilizer::computesFuzzyPID(Fuzzy* fuzzy, FuzzyPID* fuzzyPID, float dTime
 	fuzzyPID->lastError = error;
 
 	// Output
-	float output = fuzzyPID->P - fuzzyPID->I - fuzzyPID->D;
+	float output = fuzzyPID->P + fuzzyPID->I + fuzzyPID->D;
 	output = constrain(output, fuzzyPID->outMin, fuzzyPID->outMax);
 
 	return output;
@@ -189,27 +171,28 @@ void Stabilizer::fuzzyPitchInit(){
 	////////////////Rule01/////////////////////////////
 	FuzzyRuleAntecedent* ifNegativeAngleHigh = new FuzzyRuleAntecedent();
 	ifNegativeAngleHigh->joinSingle(negativeAngleHigh);
-	FuzzyRuleConsequent* thenPwmHigh = new FuzzyRuleConsequent();
-	thenPwmHigh->addOutput(pwmHigh);
-	FuzzyRule* fuzzyRule01 = new FuzzyRule(1, ifNegativeAngleHigh, thenPwmHigh);
+	FuzzyRuleConsequent* thenNegativePwmHigh = new FuzzyRuleConsequent();
+	thenNegativePwmHigh->addOutput(negativePwmHigh);
+
+	FuzzyRule* fuzzyRule01 = new FuzzyRule(1, ifNegativeAngleHigh, thenNegativePwmHigh);
 
 	fuzzyPitch->addFuzzyRule(fuzzyRule01);
 
 	////////////////Rule02/////////////////////////////
 	FuzzyRuleAntecedent* ifNegativeAngleMiddle = new FuzzyRuleAntecedent();
 	ifNegativeAngleMiddle->joinSingle(negativeAngleMiddle);
-	FuzzyRuleConsequent* thenPwmMiddle = new FuzzyRuleConsequent();
-	thenPwmMiddle->addOutput(pwmMiddle);
-	FuzzyRule* fuzzyRule02 = new FuzzyRule(2, ifNegativeAngleMiddle, thenPwmMiddle);
+	FuzzyRuleConsequent* thenNegativePwmMiddle = new FuzzyRuleConsequent();
+	thenNegativePwmMiddle->addOutput(negativePwmMiddle);
+	FuzzyRule* fuzzyRule02 = new FuzzyRule(2, ifNegativeAngleMiddle, thenNegativePwmMiddle);
 
 	fuzzyPitch->addFuzzyRule(fuzzyRule02);
 
 	////////////////Rule03/////////////////////////////
 	FuzzyRuleAntecedent* ifNegativeAngleLow = new FuzzyRuleAntecedent();
 	ifNegativeAngleLow->joinSingle(negativeAngleLow);
-	FuzzyRuleConsequent* thenPwmLow = new FuzzyRuleConsequent();
-	thenPwmLow->addOutput(pwmLow);
-	FuzzyRule* fuzzyRule03 = new FuzzyRule(3, ifNegativeAngleLow, thenPwmLow);
+	FuzzyRuleConsequent* thenNegativePwmLow = new FuzzyRuleConsequent();
+	thenNegativePwmLow->addOutput(negativePwmLow);
+	FuzzyRule* fuzzyRule03 = new FuzzyRule(3, ifNegativeAngleLow, thenNegativePwmLow);
 
 	fuzzyPitch->addFuzzyRule(fuzzyRule03);
 
@@ -225,27 +208,27 @@ void Stabilizer::fuzzyPitchInit(){
 	////////////////Rule05/////////////////////////////
 	FuzzyRuleAntecedent* ifAngleLow = new FuzzyRuleAntecedent();
 	ifAngleLow->joinSingle(angleLow);
-	FuzzyRuleConsequent* thenNegativePwmLow = new FuzzyRuleConsequent();
-	thenNegativePwmLow->addOutput(negativePwmLow);
-	FuzzyRule* fuzzyRule05 = new FuzzyRule(5, ifAngleLow, thenNegativePwmLow);
+	FuzzyRuleConsequent* thenPwmLow = new FuzzyRuleConsequent();
+	thenPwmLow->addOutput(pwmLow);
+	FuzzyRule* fuzzyRule05 = new FuzzyRule(5, ifAngleLow, thenPwmLow);
 
 	fuzzyPitch->addFuzzyRule(fuzzyRule05);
 
 	////////////////Rule06/////////////////////////////
 	FuzzyRuleAntecedent* ifAngleMiddle = new FuzzyRuleAntecedent();
 	ifAngleMiddle->joinSingle(angleMiddle);
-	FuzzyRuleConsequent* thenNegativePwmMiddle = new FuzzyRuleConsequent();
-	thenNegativePwmMiddle->addOutput(negativePwmMiddle);
-	FuzzyRule* fuzzyRule06 = new FuzzyRule(6, ifAngleMiddle, thenNegativePwmMiddle);
+	FuzzyRuleConsequent* thenPwmMiddle = new FuzzyRuleConsequent();
+	thenPwmMiddle->addOutput(pwmMiddle);
+	FuzzyRule* fuzzyRule06 = new FuzzyRule(6, ifAngleMiddle, thenPwmMiddle);
 
 	fuzzyPitch->addFuzzyRule(fuzzyRule06);
 
 	////////////////Rule07/////////////////////////////
 	FuzzyRuleAntecedent* ifAngleHigh = new FuzzyRuleAntecedent();
 	ifAngleHigh->joinSingle(angleHigh);
-	FuzzyRuleConsequent* thenNegativePwmHigh = new FuzzyRuleConsequent();
-	thenNegativePwmHigh->addOutput(negativePwmHigh);
-	FuzzyRule* fuzzyRule07 = new FuzzyRule(7, ifAngleHigh, thenNegativePwmHigh);
+	FuzzyRuleConsequent* thenPwmHigh = new FuzzyRuleConsequent();
+	thenPwmHigh->addOutput(pwmHigh);
+	FuzzyRule* fuzzyRule07 = new FuzzyRule(7, ifAngleHigh, thenPwmHigh);
 
 	fuzzyPitch->addFuzzyRule(fuzzyRule07);
 }
@@ -296,27 +279,28 @@ void Stabilizer::fuzzyRollInit(){
 	////////////////Rule01/////////////////////////////
 	FuzzyRuleAntecedent* ifNegativeAngleHigh = new FuzzyRuleAntecedent();
 	ifNegativeAngleHigh->joinSingle(negativeAngleHigh);
-	FuzzyRuleConsequent* thenPwmHigh = new FuzzyRuleConsequent();
-	thenPwmHigh->addOutput(pwmHigh);
-	FuzzyRule* fuzzyRule01 = new FuzzyRule(1, ifNegativeAngleHigh, thenPwmHigh);
+	FuzzyRuleConsequent* thenNegativePwmHigh = new FuzzyRuleConsequent();
+	thenNegativePwmHigh->addOutput(negativePwmHigh);
+
+	FuzzyRule* fuzzyRule01 = new FuzzyRule(1, ifNegativeAngleHigh, thenNegativePwmHigh);
 
 	fuzzyRoll->addFuzzyRule(fuzzyRule01);
 
 	////////////////Rule02/////////////////////////////
 	FuzzyRuleAntecedent* ifNegativeAngleMiddle = new FuzzyRuleAntecedent();
 	ifNegativeAngleMiddle->joinSingle(negativeAngleMiddle);
-	FuzzyRuleConsequent* thenPwmMiddle = new FuzzyRuleConsequent();
-	thenPwmMiddle->addOutput(pwmMiddle);
-	FuzzyRule* fuzzyRule02 = new FuzzyRule(2, ifNegativeAngleMiddle, thenPwmMiddle);
+	FuzzyRuleConsequent* thenNegativePwmMiddle = new FuzzyRuleConsequent();
+	thenNegativePwmMiddle->addOutput(negativePwmMiddle);
+	FuzzyRule* fuzzyRule02 = new FuzzyRule(2, ifNegativeAngleMiddle, thenNegativePwmMiddle);
 
 	fuzzyRoll->addFuzzyRule(fuzzyRule02);
 
 	////////////////Rule03/////////////////////////////
 	FuzzyRuleAntecedent* ifNegativeAngleLow = new FuzzyRuleAntecedent();
 	ifNegativeAngleLow->joinSingle(negativeAngleLow);
-	FuzzyRuleConsequent* thenPwmLow = new FuzzyRuleConsequent();
-	thenPwmLow->addOutput(pwmLow);
-	FuzzyRule* fuzzyRule03 = new FuzzyRule(3, ifNegativeAngleLow, thenPwmLow);
+	FuzzyRuleConsequent* thenNegativePwmLow = new FuzzyRuleConsequent();
+	thenNegativePwmLow->addOutput(negativePwmLow);
+	FuzzyRule* fuzzyRule03 = new FuzzyRule(3, ifNegativeAngleLow, thenNegativePwmLow);
 
 	fuzzyRoll->addFuzzyRule(fuzzyRule03);
 
@@ -332,27 +316,27 @@ void Stabilizer::fuzzyRollInit(){
 	////////////////Rule05/////////////////////////////
 	FuzzyRuleAntecedent* ifAngleLow = new FuzzyRuleAntecedent();
 	ifAngleLow->joinSingle(angleLow);
-	FuzzyRuleConsequent* thenNegativePwmLow = new FuzzyRuleConsequent();
-	thenNegativePwmLow->addOutput(negativePwmLow);
-	FuzzyRule* fuzzyRule05 = new FuzzyRule(5, ifAngleLow, thenNegativePwmLow);
+	FuzzyRuleConsequent* thenPwmLow = new FuzzyRuleConsequent();
+	thenPwmLow->addOutput(pwmLow);
+	FuzzyRule* fuzzyRule05 = new FuzzyRule(5, ifAngleLow, thenPwmLow);
 
 	fuzzyRoll->addFuzzyRule(fuzzyRule05);
 
 	////////////////Rule06/////////////////////////////
 	FuzzyRuleAntecedent* ifAngleMiddle = new FuzzyRuleAntecedent();
 	ifAngleMiddle->joinSingle(angleMiddle);
-	FuzzyRuleConsequent* thenNegativePwmMiddle = new FuzzyRuleConsequent();
-	thenNegativePwmMiddle->addOutput(negativePwmMiddle);
-	FuzzyRule* fuzzyRule06 = new FuzzyRule(6, ifAngleMiddle, thenNegativePwmMiddle);
+	FuzzyRuleConsequent* thenPwmMiddle = new FuzzyRuleConsequent();
+	thenPwmMiddle->addOutput(pwmMiddle);
+	FuzzyRule* fuzzyRule06 = new FuzzyRule(6, ifAngleMiddle, thenPwmMiddle);
 
 	fuzzyRoll->addFuzzyRule(fuzzyRule06);
 
 	////////////////Rule07/////////////////////////////
 	FuzzyRuleAntecedent* ifAngleHigh = new FuzzyRuleAntecedent();
 	ifAngleHigh->joinSingle(angleHigh);
-	FuzzyRuleConsequent* thenNegativePwmHigh = new FuzzyRuleConsequent();
-	thenNegativePwmHigh->addOutput(negativePwmHigh);
-	FuzzyRule* fuzzyRule07 = new FuzzyRule(7, ifAngleHigh, thenNegativePwmHigh);
+	FuzzyRuleConsequent* thenPwmHigh = new FuzzyRuleConsequent();
+	thenPwmHigh->addOutput(pwmHigh);
+	FuzzyRule* fuzzyRule07 = new FuzzyRule(7, ifAngleHigh, thenPwmHigh);
 
 	fuzzyRoll->addFuzzyRule(fuzzyRule07);
 }
