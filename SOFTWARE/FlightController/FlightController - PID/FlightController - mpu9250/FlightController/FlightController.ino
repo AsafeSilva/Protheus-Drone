@@ -13,7 +13,7 @@ github.com/AsafeSilva/Protheus-Drone
 
 > Data de Criação:	18/08/2017
 
-> Última modificação:	08/12/2017
+> Última modificação:	23/08/2018
 
 > Descrição do projeto:
 
@@ -122,10 +122,8 @@ void loop() {
 	// If drone DISARMED, Stop motors and resetPID
 	if(DroneState == DISARMED){
 		Stabilizer::reset();
+
 		Motors::stop();
-
-		printRadioChannels();
-
 	}else if(DroneState == ESC_CALIBRATION){
 		float throttle = mapFloat(ThrottleChannel.timer, ThrottleChannel.MIN, ThrottleChannel.MAX, MIN_DUTY_CYCLE, MAX_DUTY_CYCLE);
 		uint32_t powers[] = {throttle, throttle, throttle, throttle};
@@ -137,8 +135,10 @@ void loop() {
 	// If the data is ready...
 	if(AHRS::readData()){
 
+		AHRS::debug();
+
 		// Read Radio Control
-		float throttleSetPoint = mapFloat(ThrottleChannel.timer, ThrottleChannel.MIN, ThrottleChannel.MAX, MIN_DUTY_2FLY, MIN_DUTY_2FLY + (MAX_DUTY_CYCLE-MIN_DUTY_2FLY)*0.6f);
+		float throttleSetPoint = mapFloat(ThrottleChannel.timer, ThrottleChannel.MIN, ThrottleChannel.MAX, MIN_DUTY_2FLY, MAX_DUTY_CYCLE);
 		float yawControl = mapFloat(YawChannel.timer, YawChannel.MIN, YawChannel.MAX, YAW_MIN, YAW_MAX);
 		float pitchControl = mapFloat(PitchChannel.timer, PitchChannel.MIN, PitchChannel.MAX, PITCH_MIN, PITCH_MAX);
 		float rollControl = mapFloat(RollChannel.timer, RollChannel.MIN, RollChannel.MAX, ROLL_MIN, ROLL_MAX);
@@ -202,7 +202,9 @@ void loop() {
 			DataToSend[SendID::M4_VEL] = *(Motors::getPercentPower()+3);
 		}else{
 			Stabilizer::reset();
-			Motors::stop();
+
+			uint32_t powers[] = {MIN_DUTY_2FLY, MIN_DUTY_2FLY, MIN_DUTY_2FLY, MIN_DUTY_2FLY};
+			Motors::setPower(powers);
 		}
 
 		// === SEND DATA TO INTERFACE

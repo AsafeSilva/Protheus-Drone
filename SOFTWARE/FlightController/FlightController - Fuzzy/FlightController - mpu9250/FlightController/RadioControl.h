@@ -382,35 +382,35 @@ void RadioControl_begin(){
 	setupChannel2();
 	setupChannel3();
 	setupChannel4();
-	setupChannel5();
+	setupChannel5();	
 
 #ifdef CALIBRATE_RADIO
 	calibrateRadio();
 #else
-	RollChannel.MIN = 48569;
-	RollChannel.MAX = 83114;
-	PitchChannel.MIN = 41063;
-	PitchChannel.MAX = 76719;
-	ThrottleChannel.MIN = 41104;
-	ThrottleChannel.MAX = 75815;
-	YawChannel.MIN = 41145;
-	YawChannel.MAX = 76308;
-	SwitchChannel.MIN = 41040;
-	SwitchChannel.MAX = 82168;
+	RollChannel.MIN = 41198;
+	RollChannel.MAX = 75870;
+	PitchChannel.MIN = 41238;
+	PitchChannel.MAX = 77046;
+	ThrottleChannel.MIN = 41278;
+	ThrottleChannel.MAX = 76141;
+	YawChannel.MIN = 41321;
+	YawChannel.MAX = 76428;
+	SwitchChannel.MIN = 41217;
+	SwitchChannel.MAX = 82521;
 #endif
-
+	
 
 	digitalWrite(PIN_LED_DEBUG, 1);
 	delay(1000);
 
 
 	for (int i = 0; i < 100; i++){
-		float roll = mapFloat(RollChannel.timer, RollChannel.MIN, RollChannel.MAX, ROLL_MIN, ROLL_MAX);
-		float pitch = mapFloat(PitchChannel.timer, PitchChannel.MIN, PitchChannel.MAX, PITCH_MIN, PITCH_MAX);
-	
-		RollChannel.offset += roll;
-		PitchChannel.offset += pitch;
-		delay(30);
+			float roll = mapFloat(RollChannel.timer, RollChannel.MIN, RollChannel.MAX, ROLL_MIN, ROLL_MAX);
+			float pitch = mapFloat(PitchChannel.timer, PitchChannel.MIN, PitchChannel.MAX, PITCH_MIN, PITCH_MAX);
+		
+			RollChannel.offset += roll;
+			PitchChannel.offset += pitch;
+			delay(30);
 	}
 
 	RollChannel.offset /= 100;

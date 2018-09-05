@@ -56,8 +56,8 @@ bool AHRS::begin(){
 	// Calibration for remove sensor offset
 	AHRS::GyroCalibrate();
 	AHRS::AccelCalibrate();
-	accelPitchBias = 0;
-	accelRollBias = 0;
+	accelPitchBias = 0.02;
+	accelRollBias = 7.86;
 
 	// Set starting angle
 	outCompPitch = accelPitch - accelPitchBias;

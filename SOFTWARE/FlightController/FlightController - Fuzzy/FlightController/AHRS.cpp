@@ -70,8 +70,8 @@ bool AHRS::begin(){
 	// Set starting angle
 	outCompPitch = accelPitch - accelPitchBias;
 	outCompRoll = accelRoll - accelRollBias;
-	// kalmanPitch.setAngle(AHRS::getPitch());
-	// kalmanRoll.setAngle(AHRS::getRoll());
+	kalmanPitch.setAngle(outCompPitch);
+	kalmanRoll.setAngle(outCompRoll);
 
 	lastComputeTime = millis();
 
@@ -150,6 +150,9 @@ void AHRS::processComplementaryFilter(){
 	accelPitch -= accelPitchBias;
 	accelRoll -= accelRollBias;
 
+	// float lastCompPitch = outCompPitch;
+	// float lastCompRoll = outCompRoll;
+
 	// Angle with complementary filter (gyroscope + accelerometer)
 	outCompPitch = (outCompPitch + gyroX*dt) * 0.994f + accelPitch * 0.006f;
 	outCompRoll = (outCompRoll + gyroY*dt) * 0.994f + accelRoll * 0.006f;
@@ -194,14 +197,14 @@ float AHRS::getGy(){ return gyroY; }
 float AHRS::getGz(){ return gyroZ; }
 
 void AHRS::debug(){
-	LOG(getGyroYaw());	LOG(TAB);
-	LOG(getPitch());	LOG(TAB);
-	LOG(getRoll());	LOG(NEW_LINE);
+	LOG("Y: ");	LOG(getGyroYaw());	LOG("  ");
+	LOG("P: ");	LOG(getPitch());	LOG("  ");
+	LOG("R: ");	LOG(getRoll());	LOG(NEW_LINE);
 }
 
 void AHRS::AccelCalibrate(){
 
-	for (int i = 0; i < 2000; i++){
+	for (int i = 0; i < 500; i++){
 
 		imu.getAcceleration(&ax, &ay, &az);
 
@@ -216,17 +219,17 @@ void AHRS::AccelCalibrate(){
 		accelRollBias += accelRoll;
 	}
 
-	accelPitchBias /= 2000.0f;
-	accelRollBias /= 2000.0f;
+	accelPitchBias /= 500.0f;
+	accelRollBias /= 500.0f;
 
-	LOG("Accelerometer bias (pitch  roll): ");
-	LOG(accelPitchBias); LOG(TAB);
-	LOG(accelRollBias); LOG(NEW_LINE);
+	LOGln("Accelerometer bias:");
+	LOG("accelPitchBias = "); LOG(accelPitchBias); LOG(";"); LOG(NEW_LINE);
+	LOG("accelRollBias = "); LOG(accelRollBias); LOG(";"); LOG(NEW_LINE);
 }
 
 void AHRS::GyroCalibrate(){
 
-	for (int i = 0; i < 2000; i++){
+	for (int i = 0; i < 500; i++){
 
 		imu.getRotation(&gx, &gy, &gz);
 
@@ -235,7 +238,7 @@ void AHRS::GyroCalibrate(){
 		gyroZBias += gz;
 	}
 
-	gyroXBias /= 2000.0f;
-	gyroYBias /= 2000.0f;
-	gyroZBias /= 2000.0f;
+	gyroXBias /= 500.0f;
+	gyroYBias /= 500.0f;
+	gyroZBias /= 500.0f;
 }
