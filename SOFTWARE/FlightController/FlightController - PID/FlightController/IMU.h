@@ -10,7 +10,7 @@
 #include "_utils.h"
 
 
-class AHRS{
+class IMU{
 
 private:
 

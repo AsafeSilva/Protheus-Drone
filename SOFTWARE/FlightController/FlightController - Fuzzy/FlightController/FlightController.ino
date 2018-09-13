@@ -27,7 +27,7 @@ github.com/AsafeSilva/Protheus-Drone
 		- Electronic Speed Control (ESC)
 	<> Software
 		- 1° Passo		"Leitura do rádio controle"
-		- 2° Passo		"Leitura do AHRS (Attitude and Heading Reference System)"
+		- 2° Passo		"Leitura da orientação (Yaw, Pitch e Roll) do Drone"
 		- 3° Passo		"Cálculo do Fuzzy (Yaw - Pitch - Roll)"
 		- 4° Passo		"Atualizar velocidades dos motores"
 		- 5° Passo		"Comunicação com o sintonizador"
@@ -57,7 +57,7 @@ IFPE Campus Caruaru, com a Universidad de Chile, INACAP.
 #include "InterfaceComm.h"
 #include "RadioControl.h"
 #include "Motors.h"
-#include "AHRS.h"
+#include "IMU.h"
 #include "Stabilizer.h"
 
 
@@ -95,10 +95,10 @@ void setup() {
 	RadioControl_begin();
 
 	// 
-	// Setup AHRS
+	// Setup IMU
 	// 
 	waitActivation(&ThrottleChannel.timer, ThrottleChannel.MIN+1000, &YawChannel.timer, YawChannel.MAX-1000);
-	if(!AHRS::begin())	while(true);
+	if(!IMU::begin())	while(true);
 
 	// 
 	// Setup Stabilizer
@@ -132,7 +132,7 @@ void loop() {
 	}
 
 	// If the data is ready...
-	if(AHRS::readData()){
+	if(IMU::readData()){
 
 		// Read Radio Control
 		float throttleSetPoint = mapFloat(ThrottleChannel.timer, ThrottleChannel.MIN, ThrottleChannel.MAX, MIN_DUTY_2FLY, MIN_DUTY_2FLY + (MAX_DUTY_CYCLE-MIN_DUTY_2FLY)*0.6f);
@@ -161,17 +161,17 @@ void loop() {
 		else if(rollControl > 1508) rollSetPoint = rollControl - 1508;
 
 		// Calculate SETPOINT
-		pitchSetPoint = (pitchSetPoint - AHRS::getPitch() * 49.2f) / 3.0f; 
-		rollSetPoint = (rollSetPoint - AHRS::getRoll() * 49.2f) / 3.0f; 
+		pitchSetPoint = (pitchSetPoint - IMU::getPitch() * 49.2f) / 3.0f; 
+		rollSetPoint = (rollSetPoint - IMU::getRoll() * 49.2f) / 3.0f; 
 		yawSetPoint /= 3.0f;
 
 
 		// === LOAD DATA TO INTERFACE
-		DataToSend[SendID::YAW_IN] = AHRS::getGyroYaw();
+		DataToSend[SendID::YAW_IN] = IMU::getGyroYaw();
 		DataToSend[SendID::YAW_SET] = yawSetPoint;
-		DataToSend[SendID::PITCH_IN] = AHRS::getGyroPitch();
+		DataToSend[SendID::PITCH_IN] = IMU::getGyroPitch();
 		DataToSend[SendID::PITCH_SET] = pitchSetPoint;
-		DataToSend[SendID::ROLL_IN] = AHRS::getGyroRoll();
+		DataToSend[SendID::ROLL_IN] = IMU::getGyroRoll();
 		DataToSend[SendID::ROLL_SET] = rollSetPoint;
 
 
@@ -183,13 +183,13 @@ void loop() {
 			Stabilizer::throttleUpdateSetPoint(throttleSetPoint);
 
 			Stabilizer::yawUpdateSetPoint(yawSetPoint);
-			Stabilizer::yawUpdateInput(AHRS::getGyroYaw());
+			Stabilizer::yawUpdateInput(IMU::getGyroYaw());
 	
 			Stabilizer::pitchUpdateSetPoint(pitchSetPoint);
-			Stabilizer::pitchUpdateInput(AHRS::getGyroPitch());
+			Stabilizer::pitchUpdateInput(IMU::getGyroPitch());
 	
 			Stabilizer::rollUpdateSetPoint(rollSetPoint);
-			Stabilizer::rollUpdateInput(AHRS::getGyroRoll());
+			Stabilizer::rollUpdateInput(IMU::getGyroRoll());
 	
 			Stabilizer::stabilize();
 

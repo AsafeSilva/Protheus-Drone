@@ -1,34 +1,34 @@
-#include "AHRS.h"
+#include "IMU.h"
 
 
-MPU9250 AHRS::imu;
-Kalman AHRS::kalmanPitch;
-Kalman AHRS::kalmanRoll;
+MPU9250 IMU::imu;
+Kalman IMU::kalmanPitch;
+Kalman IMU::kalmanRoll;
 
-float AHRS::accelPitchBias = 0;
-float AHRS::accelRollBias = 0;
-float AHRS::gyroXBias = 0;
-float AHRS::gyroYBias = 0;
-float AHRS::gyroZBias = 0;
+float IMU::accelPitchBias = 0;
+float IMU::accelRollBias = 0;
+float IMU::gyroXBias = 0;
+float IMU::gyroYBias = 0;
+float IMU::gyroZBias = 0;
 
-float AHRS::rawGyroPitch = 0; 
-float AHRS::rawGyroRoll = 0;
-float AHRS::rawGyroYaw = 0;
-float AHRS::accelPitch = 0; 
-float AHRS::accelRoll = 0;
+float IMU::rawGyroPitch = 0; 
+float IMU::rawGyroRoll = 0;
+float IMU::rawGyroYaw = 0;
+float IMU::accelPitch = 0; 
+float IMU::accelRoll = 0;
 
-float AHRS::outKalmanPitch = 0;
-float AHRS::outKalmanRoll = 0;
-float AHRS::outCompPitch = 0;
-float AHRS::outCompRoll = 0;
+float IMU::outKalmanPitch = 0;
+float IMU::outKalmanRoll = 0;
+float IMU::outCompPitch = 0;
+float IMU::outCompRoll = 0;
 
-float AHRS::pitchAngle = 0; 
-float AHRS::rollAngle = 0;
+float IMU::pitchAngle = 0; 
+float IMU::rollAngle = 0;
 
-unsigned long AHRS::lastComputeTime;
+unsigned long IMU::lastComputeTime;
 
 
-bool AHRS::begin(){
+bool IMU::begin(){
 
 	LOG("\nInitializing Reference System (IMU + Magnetometer + Barometer)...\n");
 
@@ -54,10 +54,10 @@ bool AHRS::begin(){
 	imu.initMPU9250();
 
 	// Calibration for remove sensor offset
-	AHRS::GyroCalibrate();
-	AHRS::AccelCalibrate();
-	accelPitchBias = 0;
-	accelRollBias = 0;
+	IMU::GyroCalibrate();
+	IMU::AccelCalibrate();
+	accelPitchBias = 0.02;
+	accelRollBias = 7.86;
 
 	// Set starting angle
 	outCompPitch = accelPitch - accelPitchBias;
@@ -73,7 +73,7 @@ bool AHRS::begin(){
 }
 
 
-bool AHRS::readData(){
+bool IMU::readData(){
 
 	if (!(imu.readByte(MPU9250_ADDRESS, INT_STATUS) & 0x01)){
 		LOGln("... data not ready ...");
@@ -115,7 +115,7 @@ bool AHRS::readData(){
 	return true;
 }
 
-void AHRS::processKalmanFilter(){
+void IMU::processKalmanFilter(){
 	// === CALCULATE ANGLES WITH ACCELETOMETER VALUES === //
   	accelPitch = atan2(imu.ay, sqrt(imu.ax*imu.ax + imu.az*imu.az)) * RAD_TO_DEG;
   	accelRoll = -atan2(imu.ax, sqrt(imu.ay*imu.ay + imu.az*imu.az)) * RAD_TO_DEG;
@@ -140,7 +140,7 @@ void AHRS::processKalmanFilter(){
   	rollAngle += (outKalmanRoll - rollAngle) * alpha;
 }
 
-void AHRS::processComplementaryFilter(){
+void IMU::processComplementaryFilter(){
 	unsigned long time = (millis() - lastComputeTime); 
 	lastComputeTime = millis();
 	float dt = time/1000.0f;
@@ -174,37 +174,37 @@ void AHRS::processComplementaryFilter(){
 
 }
 
-float AHRS::getYaw(){ return 0; }
+float IMU::getYaw(){ return 0; }
 
-float AHRS::getPitch(){ return pitchAngle; }
+float IMU::getPitch(){ return pitchAngle; }
 
-float AHRS::getRoll(){ return rollAngle; }
+float IMU::getRoll(){ return rollAngle; }
 
-float AHRS::getGyroYaw(){ return rawGyroYaw; }
+float IMU::getGyroYaw(){ return rawGyroYaw; }
 
-float AHRS::getGyroPitch(){ return rawGyroPitch; }
+float IMU::getGyroPitch(){ return rawGyroPitch; }
 
-float AHRS::getGyroRoll(){ return rawGyroRoll; }
+float IMU::getGyroRoll(){ return rawGyroRoll; }
 
-float AHRS::getAx(){ return imu.ax; }
+float IMU::getAx(){ return imu.ax; }
 
-float AHRS::getAy(){ return imu.ay; }
+float IMU::getAy(){ return imu.ay; }
 
-float AHRS::getAz(){ return imu.az; }
+float IMU::getAz(){ return imu.az; }
 
-float AHRS::getGx(){ return imu.gx; }
+float IMU::getGx(){ return imu.gx; }
 
-float AHRS::getGy(){ return imu.gy; }
+float IMU::getGy(){ return imu.gy; }
 
-float AHRS::getGz(){ return imu.gz; }
+float IMU::getGz(){ return imu.gz; }
 
-void AHRS::debug(){
+void IMU::debug(){
 	LOG("Y: ");	LOG(getGyroYaw());	LOG("  ");
 	LOG("P: ");	LOG(getPitch());	LOG("  ");
 	LOG("R: ");	LOG(getRoll());	LOG(NEW_LINE);
 }
 
-void AHRS::AccelCalibrate(){
+void IMU::AccelCalibrate(){
 
 	for (int i = 0; i < 500; i++){
 
@@ -237,7 +237,7 @@ void AHRS::AccelCalibrate(){
 }
 
 
-void AHRS::GyroCalibrate(){
+void IMU::GyroCalibrate(){
 
 	for (int i = 0; i < 500; i++){
 

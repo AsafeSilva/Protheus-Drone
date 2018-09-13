@@ -1,49 +1,49 @@
-#include "AHRS.h"
+#include "IMU.h"
 
 
-MPU6050 AHRS::imu;
-Kalman AHRS::kalmanPitch;
-Kalman AHRS::kalmanRoll;
+MPU6050 IMU::imu;
+Kalman IMU::kalmanPitch;
+Kalman IMU::kalmanRoll;
 
 
-int16_t AHRS::ax = 0;
-int16_t AHRS::ay = 0;
-int16_t AHRS::az = 0;
-int16_t AHRS::gx = 0;
-int16_t AHRS::gy = 0;
-int16_t AHRS::gz = 0;
+int16_t IMU::ax = 0;
+int16_t IMU::ay = 0;
+int16_t IMU::az = 0;
+int16_t IMU::gx = 0;
+int16_t IMU::gy = 0;
+int16_t IMU::gz = 0;
 
-float AHRS::gyroX = 0;
-float AHRS::gyroY = 0;
-float AHRS::gyroZ = 0;
-float AHRS::accelX = 0;
-float AHRS::accelY = 0;
-float AHRS::accelZ = 0;
+float IMU::gyroX = 0;
+float IMU::gyroY = 0;
+float IMU::gyroZ = 0;
+float IMU::accelX = 0;
+float IMU::accelY = 0;
+float IMU::accelZ = 0;
 
-float AHRS::accelPitchBias = 0;
-float AHRS::accelRollBias = 0;
-float AHRS::gyroXBias = 0;
-float AHRS::gyroYBias = 0;
-float AHRS::gyroZBias = 0;
+float IMU::accelPitchBias = 0;
+float IMU::accelRollBias = 0;
+float IMU::gyroXBias = 0;
+float IMU::gyroYBias = 0;
+float IMU::gyroZBias = 0;
 
-float AHRS::rawGyroPitch = 0;
-float AHRS::rawGyroRoll = 0;
-float AHRS::rawGyroYaw = 0;
-float AHRS::accelPitch = 0;
-float AHRS::accelRoll = 0;
+float IMU::rawGyroPitch = 0;
+float IMU::rawGyroRoll = 0;
+float IMU::rawGyroYaw = 0;
+float IMU::accelPitch = 0;
+float IMU::accelRoll = 0;
 
-float AHRS::outKalmanPitch = 0;
-float AHRS::outKalmanRoll = 0;
-float AHRS::outCompPitch = 0;
-float AHRS::outCompRoll = 0;
+float IMU::outKalmanPitch = 0;
+float IMU::outKalmanRoll = 0;
+float IMU::outCompPitch = 0;
+float IMU::outCompRoll = 0;
 
-float AHRS::pitchAngle = 0; 
-float AHRS::rollAngle = 0;
+float IMU::pitchAngle = 0; 
+float IMU::rollAngle = 0;
 
-unsigned long AHRS::lastComputeTime;
+unsigned long IMU::lastComputeTime;
 
 
-bool AHRS::begin(){
+bool IMU::begin(){
 
 	LOG("\nInitializing Reference System (IMU + Barometer)...\n");
 
@@ -54,18 +54,18 @@ bool AHRS::begin(){
 	// Initialize device
 	imu.initialize();
 	imu.setFullScaleGyroRange(MPU6050_GYRO_FS_500);
-	imu.setFullScaleAccelRange(MPU6050_ACCEL_FS_2);
-	imu.setDLPFMode(0x03);
+    imu.setFullScaleAccelRange(MPU6050_ACCEL_FS_2);
+    imu.setDLPFMode(0x03);
 
 	if (!imu.testConnection()){
 		LOGln("Could not connect to MPU6050 (Gyro and Accel) :(");
 		return false;
 	}
 
-	AHRS::GyroCalibrate();
-	AHRS::AccelCalibrate();
-	accelPitchBias = -0.37;
-	accelRollBias = -1.72;
+	IMU::GyroCalibrate();
+	IMU::AccelCalibrate();
+	accelPitchBias = 0.51;
+	accelRollBias = -0.96;
 
 	// Set starting angle
 	outCompPitch = accelPitch - accelPitchBias;
@@ -81,7 +81,7 @@ bool AHRS::begin(){
 }
 
 
-bool AHRS::readData(){
+bool IMU::readData(){
 
 	if (!imu.getIntDataReadyStatus()){
 		LOGln("... data not ready ...");
@@ -111,7 +111,7 @@ bool AHRS::readData(){
 	return true;
 }
 
-void AHRS::processKalmanFilter(){
+void IMU::processKalmanFilter(){
 	// ANGLE WITH ACCELEROMETER
 	accelPitch = atan2(accelY, sqrt(accelX*accelX + accelZ*accelZ)) * RAD_TO_DEG;
 	accelRoll = -atan2(accelX, sqrt(accelY*accelY + accelZ*accelZ)) * RAD_TO_DEG;
@@ -137,7 +137,7 @@ void AHRS::processKalmanFilter(){
   	rollAngle += (outKalmanRoll - rollAngle) * alpha;
 }
 
-void AHRS::processComplementaryFilter(){
+void IMU::processComplementaryFilter(){
 	unsigned long time = (millis() - lastComputeTime); 
 	lastComputeTime = millis();
 	float dt = time/1000.0f;
@@ -172,37 +172,37 @@ void AHRS::processComplementaryFilter(){
 }
 
 
-float AHRS::getYaw(){ return 0; }
+float IMU::getYaw(){ return 0; }
 
-float AHRS::getPitch(){ return pitchAngle; }
+float IMU::getPitch(){ return pitchAngle; }
 
-float AHRS::getRoll(){ return rollAngle; }
+float IMU::getRoll(){ return rollAngle; }
 
-float AHRS::getGyroYaw(){ return rawGyroYaw; }
+float IMU::getGyroYaw(){ return rawGyroYaw; }
 
-float AHRS::getGyroPitch(){ return rawGyroPitch; }
+float IMU::getGyroPitch(){ return rawGyroPitch; }
 
-float AHRS::getGyroRoll(){ return rawGyroRoll; }
+float IMU::getGyroRoll(){ return rawGyroRoll; }
 
-float AHRS::getAx(){ return accelX; }
+float IMU::getAx(){ return accelX; }
 
-float AHRS::getAy(){ return accelY; }
+float IMU::getAy(){ return accelY; }
 
-float AHRS::getAz(){ return accelZ; }
+float IMU::getAz(){ return accelZ; }
 
-float AHRS::getGx(){ return gyroX; }
+float IMU::getGx(){ return gyroX; }
 
-float AHRS::getGy(){ return gyroY; }
+float IMU::getGy(){ return gyroY; }
 
-float AHRS::getGz(){ return gyroZ; }
+float IMU::getGz(){ return gyroZ; }
 
-void AHRS::debug(){
+void IMU::debug(){
 	LOG("Y: ");	LOG(getGyroYaw());	LOG("  ");
 	LOG("P: ");	LOG(getPitch());	LOG("  ");
 	LOG("R: ");	LOG(getRoll());	LOG(NEW_LINE);
 }
 
-void AHRS::AccelCalibrate(){
+void IMU::AccelCalibrate(){
 
 	for (int i = 0; i < 500; i++){
 
@@ -227,7 +227,7 @@ void AHRS::AccelCalibrate(){
 	LOG("accelRollBias = "); LOG(accelRollBias); LOG(";"); LOG(NEW_LINE);
 }
 
-void AHRS::GyroCalibrate(){
+void IMU::GyroCalibrate(){
 
 	for (int i = 0; i < 500; i++){
 
