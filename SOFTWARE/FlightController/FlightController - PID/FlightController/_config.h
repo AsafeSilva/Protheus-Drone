@@ -2,11 +2,10 @@
 
 #include <Arduino.h>
 
-
 // 
 // Project
 // 
-#define PROJECT_NAME	F("\nProtheus Drone vPID\n")
+#define PROJECT_NAME	F("\n**** Protheus Drone vPID ****\n")
 
 
 //

@@ -4,44 +4,45 @@
 
 #include "_config.h"
 
-/* 
-* PWM Capture using Arduino Due Timer Counters
-* 
-* Channels:
-*   TC    Chan   NVIC irq   Handler       PMC ID   Arduino Pin
-*   TC0   0      TC0_IRQn   TC0_Handler   ID_TC0   D2     (TIOA0)	CHANNEL 5
-*   TC2   1      TC7_IRQn   TC7_Handler   ID_TC7   D3 	  (TIOA7)	CHANNEL 4
-*   TC2   0      TC6_IRQn   TC6_Handler   ID_TC6   D5     (TIOA6)	CHANNEL 3
-*   TC2   2      TC8_IRQn   TC8_Handler   ID_TC8   D11	  (TIOA8)	CHANNEL 2
-*   TC0   1      TC1_IRQn   TC1_Handler   ID_TC1   61/A7  (TIOA1)	CHANNEL 1
-* 
+/*
+  PWM Capture using Arduino Due Timer Counters
+
+  Channels:
+    TC    Chan   NVIC irq   Handler       PMC ID   Arduino Pin
+    TC0   0      TC0_IRQn   TC0_Handler   ID_TC0   D2     (TIOA0) CHANNEL 5
+    TC2   1      TC7_IRQn   TC7_Handler   ID_TC7   D3     (TIOA7) CHANNEL 4
+    TC2   0      TC6_IRQn   TC6_Handler   ID_TC6   D5     (TIOA6) CHANNEL 3
+    TC2   2      TC8_IRQn   TC8_Handler   ID_TC8   D11    (TIOA8) CHANNEL 2
+    TC0   1      TC1_IRQn   TC1_Handler   ID_TC1   61/A7  (TIOA1) CHANNEL 1
+
 */
 
 // un/comment to enable/disable Calibration of channels
 // #define CALIBRATE_RADIO
-#define TIME_CALIBRATION	10000	// ms
+#define TIME_CALIBRATION  10000  // ms
+
+#define ROLL_MIN 1322
+#define ROLL_MAX 1738
+#define PITCH_MIN 1312
+#define PITCH_MAX 1738
+#define THROTTLE_MIN 1072
+#define THROTTLE_MAX 1738
+#define YAW_MIN 1322
+#define YAW_MAX 1740
+#define SWITCH_MIN 982
+#define SWITCH_MAX 1968
 
 
-// 
+//
 // GENERAL DEFINITIONS
-// 
+//
 #define CLOCK_SELECTION TC_CMR_TCCLKS_TIMER_CLOCK1
+#define PRESCALER 2
 
 
-struct Channel{
-	uint32_t MIN = 0xFFFFFFFF;
-	uint32_t MAX = 0;
-	uint32_t offset = 0;
-	volatile uint32_t EDGE_RISING = 0;
-	volatile uint32_t EDGE_FALLING = 0;
-	volatile uint32_t timer = 0xFFFF;
-};
-
-
-// 
+//
 // DEFINITIONS OF CHANNEL 5
-// 
-Channel SwitchChannel;
+//
 #define CH5_TC TC0
 #define CH5_CHANNEL 0
 #define CH5_IRQn TC0_IRQn
@@ -49,10 +50,9 @@ Channel SwitchChannel;
 #define CH5_ID ID_TC0
 #define CH5_PIN 2
 
-// 
+//
 // DEFINITIONS OF CHANNEL 4
-// 
-Channel YawChannel;
+//
 #define CH4_TC TC2
 #define CH4_CHANNEL 1
 #define CH4_IRQn TC7_IRQn
@@ -60,10 +60,9 @@ Channel YawChannel;
 #define CH4_ID ID_TC7
 #define CH4_PIN 3
 
-// 
+//
 // DEFINITIONS OF CHANNEL 3
-// 
-Channel ThrottleChannel;
+//
 #define CH3_TC TC2
 #define CH3_CHANNEL 0
 #define CH3_IRQn TC6_IRQn
@@ -71,10 +70,9 @@ Channel ThrottleChannel;
 #define CH3_ID ID_TC6
 #define CH3_PIN 5
 
-// 
+//
 // DEFINITIONS OF CHANNEL 2
-// 
-Channel PitchChannel;
+//
 #define CH2_TC TC2
 #define CH2_CHANNEL 2
 #define CH2_IRQn TC8_IRQn
@@ -82,10 +80,9 @@ Channel PitchChannel;
 #define CH2_ID ID_TC8
 #define CH2_PIN 11
 
-// 
+//
 // DEFINITIONS OF CHANNEL 1
-// 
-Channel RollChannel;
+//
 #define CH1_TC TC0
 #define CH1_CHANNEL 1
 #define CH1_IRQn TC1_IRQn
@@ -94,328 +91,271 @@ Channel RollChannel;
 #define CH1_PIN 61
 
 
-// 
-// Setup functions
-// 
-void setupChannel1(){	
-	// configure the PIO pin as peripheral
-	PIO_Configure(
-		g_APinDescription[CH1_PIN].pPort,
-		g_APinDescription[CH1_PIN].ulPinType,
-		g_APinDescription[CH1_PIN].ulPin,
-		g_APinDescription[CH1_PIN].ulPinConfiguration
-	);
+class RadioChannel{
+public:
+  uint32_t min, max, offset;
+  volatile uint32_t risingTime, fallingTime;
+  volatile uint32_t interval;
 
-	// enable timer peripheral clock
-	pmc_enable_periph_clk(CH1_ID);
+  RadioChannel(){
+    min = 0xFFFFFFFF;
+    max = 0;
+    offset = 0;
+    risingTime = 0;
+    fallingTime = 0;
+    interval = 0;
+  }
 
-	// configure the timer
-	TC_Configure(CH1_TC, CH1_CHANNEL,
-		CLOCK_SELECTION /* Clock Selection */
-		| TC_CMR_LDRA_RISING /* RA Loading: rising edge */
-		| TC_CMR_LDRB_FALLING /* RB Loading: falling edge */
-		| TC_CMR_ABETRG /* External Trigger */
-		| TC_CMR_ETRGEDG_FALLING /* External Trigger Edge: Falling edge */
-	);
+  void begin(uint32_t pin, uint32_t id, Tc* pTc, uint32_t channel, IRQn_Type IRQn){
+    // configure the PIO pin as peripheral
+    PIO_Configure(
+      g_APinDescription[pin].pPort,
+      g_APinDescription[pin].ulPinType,
+      g_APinDescription[pin].ulPin,
+      g_APinDescription[pin].ulPinConfiguration
+    );
 
-	// configure TC interrupts
-	NVIC_DisableIRQ(CH1_IRQn);
-	NVIC_ClearPendingIRQ(CH1_IRQn);
-	NVIC_SetPriority(CH1_IRQn, 0);
-	NVIC_EnableIRQ(CH1_IRQn);
+    // enable timer peripheral clock
+    pmc_enable_periph_clk(id);
 
-	// enable interrupts
-	CH1_TC->TC_CHANNEL[CH1_CHANNEL].TC_IER = TC_IER_LDRBS;
+    // configure the timer
+    TC_Configure(pTc, channel,
+                 CLOCK_SELECTION /* Clock Selection */
+                 | TC_CMR_LDRA_RISING /* RA Loading: rising edge */
+                 | TC_CMR_LDRB_FALLING /* RB Loading: falling edge */
+                 | TC_CMR_ABETRG /* External Trigger */
+                 | TC_CMR_ETRGEDG_FALLING /* External Trigger Edge: Falling edge */
+                );
 
-	// start timer counter
-	CH1_TC->TC_CHANNEL[CH1_CHANNEL].TC_CCR = TC_CCR_CLKEN | TC_CCR_SWTRG;	
-}
+    // configure TC interrupts
+    NVIC_DisableIRQ(IRQn);
+    NVIC_ClearPendingIRQ(IRQn);
+    NVIC_SetPriority(IRQn, 0);
+    NVIC_EnableIRQ(IRQn);
 
-void setupChannel2(){
-	// configure the PIO pin as peripheral
-	PIO_Configure(
-		g_APinDescription[CH2_PIN].pPort,
-		g_APinDescription[CH2_PIN].ulPinType,
-		g_APinDescription[CH2_PIN].ulPin,
-		g_APinDescription[CH2_PIN].ulPinConfiguration
-	);
+    // enable interrupts
+    pTc->TC_CHANNEL[channel].TC_IER = TC_IER_LDRBS;
 
-	// enable timer peripheral clock
-	pmc_enable_periph_clk(CH2_ID);
+    // start timer counter
+    pTc->TC_CHANNEL[channel].TC_CCR = TC_CCR_CLKEN | TC_CCR_SWTRG;
+  }
 
-	// configure the timer
-	TC_Configure(CH2_TC, CH2_CHANNEL,
-		CLOCK_SELECTION 			/* Clock Selection */
-		| TC_CMR_LDRA_RISING 		/* RA Loading: rising edge */
-		| TC_CMR_LDRB_FALLING 		/* RB Loading: falling edge */
-		| TC_CMR_ABETRG 			/* External Trigger*/
-		| TC_CMR_ETRGEDG_FALLING 	/* External Trigger Edge: Falling edge */
-	);
+  uint32_t read(){
+    return interval;
+  }
 
-	// configure TC interrupts
-	NVIC_DisableIRQ(CH2_IRQn);
-	NVIC_ClearPendingIRQ(CH2_IRQn);
-	NVIC_SetPriority(CH2_IRQn, 0);
-	NVIC_EnableIRQ(CH2_IRQn);
+  volatile uint32_t* getInterval(){
+    return &interval;
+  }
 
-	// enable interrupts
-	CH2_TC->TC_CHANNEL[CH2_CHANNEL].TC_IER = TC_IER_LDRBS;
+  uint32_t getOffset(){
+    return offset;
+  }
+  
+};
 
-	// start timer counter
-	CH2_TC->TC_CHANNEL[CH2_CHANNEL].TC_CCR = TC_CCR_CLKEN | TC_CCR_SWTRG;	
-}
+class RadioControl{
 
-void setupChannel3(){
-	// configure the PIO pin as peripheral
-	PIO_Configure(
-		g_APinDescription[CH3_PIN].pPort,
-		g_APinDescription[CH3_PIN].ulPinType,
-		g_APinDescription[CH3_PIN].ulPin,
-		g_APinDescription[CH3_PIN].ulPinConfiguration
-	);
+private:
 
-	// enable timer peripheral clock
-	pmc_enable_periph_clk(CH3_ID);
+  static void calibrate(){
+    LOG(NEW_LINE);
+    LOG(F("Calibrating Radio"));
 
-	// configure the timer
-	TC_Configure(CH3_TC, CH3_CHANNEL,
-		CLOCK_SELECTION 			/* Clock Selection */
-		| TC_CMR_LDRA_RISING 		/* RA Loading: rising edge */
-		| TC_CMR_LDRB_FALLING 		/* RB Loading: falling edge */
-		| TC_CMR_ABETRG 			/* External Trigger */
-		| TC_CMR_ETRGEDG_FALLING 	/* External Trigger Edge: Falling edge */
-	);
+    uint32_t now = millis();
+    delay(500);
+    while (millis() - now < TIME_CALIBRATION) {
+      if (RollChannel.interval < RollChannel.min) RollChannel.min = RollChannel.interval;
+      if (RollChannel.interval > RollChannel.max) RollChannel.max = RollChannel.interval;
+      if (PitchChannel.interval < PitchChannel.min) PitchChannel.min = PitchChannel.interval;
+      if (PitchChannel.interval > PitchChannel.max) PitchChannel.max = PitchChannel.interval;
+      if (ThrottleChannel.interval < ThrottleChannel.min) ThrottleChannel.min = ThrottleChannel.interval;
+      if (ThrottleChannel.interval > ThrottleChannel.max) ThrottleChannel.max = ThrottleChannel.interval;
+      if (YawChannel.interval < YawChannel.min) YawChannel.min = YawChannel.interval;
+      if (YawChannel.interval > YawChannel.max) YawChannel.max = YawChannel.interval;
+      if (SwitchChannel.interval < SwitchChannel.min) SwitchChannel.min = SwitchChannel.interval;
+      if (SwitchChannel.interval > SwitchChannel.max) SwitchChannel.max = SwitchChannel.interval;
 
-	// configure TC interrupts
-	NVIC_DisableIRQ(CH3_IRQn);
-	NVIC_ClearPendingIRQ(CH3_IRQn);
-	NVIC_SetPriority(CH3_IRQn, 0);
-	NVIC_EnableIRQ(CH3_IRQn);
-
-	// enable interrupts
-	CH3_TC->TC_CHANNEL[CH3_CHANNEL].TC_IER = TC_IER_LDRBS;
-
-	// start timer counter
-	CH3_TC->TC_CHANNEL[CH3_CHANNEL].TC_CCR = TC_CCR_CLKEN | TC_CCR_SWTRG;	
-}
-
-void setupChannel4(){
-	// configure the PIO pin as peripheral
-	PIO_Configure(
-		g_APinDescription[CH4_PIN].pPort,
-		g_APinDescription[CH4_PIN].ulPinType,
-		g_APinDescription[CH4_PIN].ulPin,
-		g_APinDescription[CH4_PIN].ulPinConfiguration
-	);
-
-	// enable timer peripheral clock
-	pmc_enable_periph_clk(CH4_ID);
-
-	// configure the timer
-	TC_Configure(CH4_TC, CH4_CHANNEL,
-		CLOCK_SELECTION 			/* Clock Selection */
-		| TC_CMR_LDRA_RISING 		/* RA Loading: rising edge */
-		| TC_CMR_LDRB_FALLING 		/* RB Loading: falling edge */
-		| TC_CMR_ABETRG 			/* External Trigger */
-		| TC_CMR_ETRGEDG_FALLING 	/* External Trigger Edge: Falling edge */
-	);
-
-	// configure TC interrupts
-	NVIC_DisableIRQ(CH4_IRQn);
-	NVIC_ClearPendingIRQ(CH4_IRQn);
-	NVIC_SetPriority(CH4_IRQn, 0);
-	NVIC_EnableIRQ(CH4_IRQn);
-
-	// enable interrupts
-	CH4_TC->TC_CHANNEL[CH4_CHANNEL].TC_IER = TC_IER_LDRBS;
-
-	// start timer counter
-	CH4_TC->TC_CHANNEL[CH4_CHANNEL].TC_CCR = TC_CCR_CLKEN | TC_CCR_SWTRG;
-}
-
-void setupChannel5(){
-	// configure the PIO pin as peripheral
-	PIO_Configure(
-		g_APinDescription[CH5_PIN].pPort,
-		g_APinDescription[CH5_PIN].ulPinType,
-		g_APinDescription[CH5_PIN].ulPin,
-		g_APinDescription[CH5_PIN].ulPinConfiguration
-	);
-
-	// enable timer peripheral clock
-	pmc_enable_periph_clk(CH5_ID);
-
-	// configure the timer
-	TC_Configure(CH5_TC, CH5_CHANNEL,
-		CLOCK_SELECTION 			/* Clock Selection */
-		| TC_CMR_LDRA_RISING 		/* RA Loading: rising edge */
-		| TC_CMR_LDRB_FALLING 		/* RB Loading: falling edge */
-		| TC_CMR_ABETRG 			/* External Trigger */
-		| TC_CMR_ETRGEDG_FALLING 	/* External Trigger Edge: Falling edge */
-	);
-
-	// configure TC interrupts
-	NVIC_DisableIRQ(CH5_IRQn);
-	NVIC_ClearPendingIRQ(CH5_IRQn);
-	NVIC_SetPriority(CH5_IRQn, 0);
-	NVIC_EnableIRQ(CH5_IRQn);
-
-	// enable interrupts
-	CH5_TC->TC_CHANNEL[CH5_CHANNEL].TC_IER = TC_IER_LDRBS;
-
-	// start timer counter
-	CH5_TC->TC_CHANNEL[CH5_CHANNEL].TC_CCR = TC_CCR_CLKEN | TC_CCR_SWTRG;	
-}
+      LOG((millis() - now) % 1000 == 0 ? "." : "\0");
+      delay(100);
+    }
+    LOG(NEW_LINE);
 
 
-// 
+    LOGln(F("--- Calibration values ---"));
+    LOG(F("#define ROLL_MIN ")); LOGln(RollChannel.min);
+    LOG(F("#define ROLL_MAX ")); LOGln(RollChannel.max);
+    LOG(F("#define PITCH_MIN "));  LOGln(PitchChannel.min); 
+    LOG(F("#define PITCH_MAX "));  LOGln(PitchChannel.max); 
+    LOG(F("#define THROTTLE_MIN ")); LOGln(ThrottleChannel.min);
+    LOG(F("#define THROTTLE_MAX ")); LOGln(ThrottleChannel.max);
+    LOG(F("#define YAW_MIN "));  LOGln(YawChannel.min); 
+    LOG(F("#define YAW_MAX "));  LOGln(YawChannel.max); 
+    LOG(F("#define SWITCH_MIN ")); LOGln(SwitchChannel.min);
+    LOG(F("#define SWITCH_MAX ")); LOGln(SwitchChannel.max);
+    LOG(NEW_LINE);
+  }
+
+public:
+
+  static RadioChannel RollChannel, PitchChannel, ThrottleChannel, YawChannel, SwitchChannel;
+
+  static bool calibrated;
+  
+  static void begin(){
+
+    LOG("\nInitializing RadioControl...\n");
+
+    RollChannel.begin(CH1_PIN, CH1_ID, CH1_TC, CH1_CHANNEL, CH1_IRQn);
+    PitchChannel.begin(CH2_PIN, CH2_ID, CH2_TC, CH2_CHANNEL, CH2_IRQn);
+    ThrottleChannel.begin(CH3_PIN, CH3_ID, CH3_TC, CH3_CHANNEL, CH3_IRQn);
+    YawChannel.begin(CH4_PIN, CH4_ID, CH4_TC, CH4_CHANNEL, CH4_IRQn);
+    SwitchChannel.begin(CH5_PIN, CH5_ID, CH5_TC, CH5_CHANNEL, CH5_IRQn);
+
+#ifdef CALIBRATE_RADIO
+    calibrate();
+
+    calibrated = true;
+#else
+    RollChannel.min = ROLL_MIN;
+    RollChannel.max = ROLL_MAX;
+    PitchChannel.min = PITCH_MIN;
+    PitchChannel.max = PITCH_MAX;
+    ThrottleChannel.min = THROTTLE_MIN;
+    ThrottleChannel.max = THROTTLE_MAX;
+    YawChannel.min = YAW_MIN;
+    YawChannel.max = YAW_MAX;
+    SwitchChannel.min = SWITCH_MIN;
+    SwitchChannel.max = SWITCH_MAX;
+
+    calibrated = true;
+#endif
+
+    digitalWrite(PIN_LED_DEBUG, 1);
+    delay(1000);
+
+    // Calculates offset
+    // for (int i = 0; i < 100; i++) {
+    //   RollChannel.offset += RollChannel.read();
+    //   PitchChannel.offset += PitchChannel.read();
+    //   delay(30);
+    // }
+
+    // RollChannel.offset /= 100;
+    // PitchChannel.offset /= 100;
+
+    // RollChannel.offset -= 1500;
+    // PitchChannel.offset -= 1500;
+  }
+
+  static void debug(){
+    LOG("CH1 (us): "); LOG(RollChannel.read());     LOG(TAB);
+    LOG("CH2 (us): "); LOG(PitchChannel.read());    LOG(TAB);
+    LOG("CH3 (us): "); LOG(ThrottleChannel.read()); LOG(TAB);
+    LOG("CH4 (us): "); LOG(YawChannel.read());      LOG(TAB);
+    LOG("CH5 (us): "); LOG(SwitchChannel.read());   LOG(NEW_LINE);
+  }
+  
+};
+
+RadioChannel RadioControl::RollChannel;
+RadioChannel RadioControl::PitchChannel;
+RadioChannel RadioControl::ThrottleChannel;
+RadioChannel RadioControl::YawChannel;
+RadioChannel RadioControl::SwitchChannel;
+bool RadioControl::calibrated = false;
+
+
+//
 // Timer interrupt handles
-// 
+//
 void CH1_Handler() {
-	if ((TC_GetStatus(CH1_TC, CH1_CHANNEL) & TC_SR_LDRBS) == TC_SR_LDRBS) {
+  if ((TC_GetStatus(CH1_TC, CH1_CHANNEL) & TC_SR_LDRBS) == TC_SR_LDRBS) {
 
-		RollChannel.EDGE_RISING = CH1_TC->TC_CHANNEL[CH1_CHANNEL].TC_RA;
-		RollChannel.EDGE_FALLING = CH1_TC->TC_CHANNEL[CH1_CHANNEL].TC_RB;
+    RadioControl::RollChannel.risingTime = CH1_TC->TC_CHANNEL[CH1_CHANNEL].TC_RA;
+    RadioControl::RollChannel.fallingTime = CH1_TC->TC_CHANNEL[CH1_CHANNEL].TC_RB;
 
-		RollChannel.timer = RollChannel.EDGE_FALLING - RollChannel.EDGE_RISING;
-	}
+    RadioControl::RollChannel.interval = RadioControl::RollChannel.fallingTime - RadioControl::RollChannel.risingTime;
+    RadioControl::RollChannel.interval = clockCyclesToMicroseconds(RadioControl::RollChannel.interval) * PRESCALER;
+  
+    if(RadioControl::calibrated){
+      RadioControl::RollChannel.interval = (RadioControl::RollChannel.interval - RadioControl::RollChannel.min) * 1000.0 / (RadioControl::RollChannel.max - RadioControl::RollChannel.min) + 1000.0;
+    
+      if(RadioControl::RollChannel.interval > 0xFFFF)
+        RadioControl::RollChannel.interval = 1000;
+    }
+
+  }
 }
 
 void CH2_Handler() {
-	if ((TC_GetStatus(CH2_TC, CH2_CHANNEL) & TC_SR_LDRBS) == TC_SR_LDRBS) {
+  if ((TC_GetStatus(CH2_TC, CH2_CHANNEL) & TC_SR_LDRBS) == TC_SR_LDRBS) {
 
-		PitchChannel.EDGE_RISING = CH2_TC->TC_CHANNEL[CH2_CHANNEL].TC_RA;
-		PitchChannel.EDGE_FALLING = CH2_TC->TC_CHANNEL[CH2_CHANNEL].TC_RB;
+    RadioControl::PitchChannel.risingTime = CH2_TC->TC_CHANNEL[CH2_CHANNEL].TC_RA;
+    RadioControl::PitchChannel.fallingTime = CH2_TC->TC_CHANNEL[CH2_CHANNEL].TC_RB;
 
-		PitchChannel.timer = PitchChannel.EDGE_FALLING - PitchChannel.EDGE_RISING;
-	}
+    RadioControl::PitchChannel.interval = RadioControl::PitchChannel.fallingTime - RadioControl::PitchChannel.risingTime;
+    RadioControl::PitchChannel.interval = clockCyclesToMicroseconds(RadioControl::PitchChannel.interval) * PRESCALER;
+  
+    if(RadioControl::calibrated){
+      RadioControl::PitchChannel.interval = (RadioControl::PitchChannel.interval - RadioControl::PitchChannel.min) * 1000.0 / (RadioControl::PitchChannel.max - RadioControl::PitchChannel.min) + 1000.0;
+    
+      if(RadioControl::PitchChannel.interval > 0xFFFF)
+        RadioControl::PitchChannel.interval = 1000;
+    }
+  }
 }
 
 void CH3_Handler() {
-	if ((TC_GetStatus(CH3_TC, CH3_CHANNEL) & TC_SR_LDRBS) == TC_SR_LDRBS) {
+  if ((TC_GetStatus(CH3_TC, CH3_CHANNEL) & TC_SR_LDRBS) == TC_SR_LDRBS) {
 
-		ThrottleChannel.EDGE_RISING = CH3_TC->TC_CHANNEL[CH3_CHANNEL].TC_RA;
-		ThrottleChannel.EDGE_FALLING = CH3_TC->TC_CHANNEL[CH3_CHANNEL].TC_RB;
+    RadioControl::ThrottleChannel.risingTime = CH3_TC->TC_CHANNEL[CH3_CHANNEL].TC_RA;
+    RadioControl::ThrottleChannel.fallingTime = CH3_TC->TC_CHANNEL[CH3_CHANNEL].TC_RB;
 
-		ThrottleChannel.timer = ThrottleChannel.EDGE_FALLING - ThrottleChannel.EDGE_RISING;
-	}
+    RadioControl::ThrottleChannel.interval = RadioControl::ThrottleChannel.fallingTime - RadioControl::ThrottleChannel.risingTime;
+    RadioControl::ThrottleChannel.interval = clockCyclesToMicroseconds(RadioControl::ThrottleChannel.interval) * PRESCALER;
+  
+    if(RadioControl::calibrated){
+      RadioControl::ThrottleChannel.interval = (RadioControl::ThrottleChannel.interval - RadioControl::ThrottleChannel.min) * 1000.0 / (RadioControl::ThrottleChannel.max - RadioControl::ThrottleChannel.min) + 1000.0;
+
+      if(RadioControl::ThrottleChannel.interval > 0xFFFF)
+        RadioControl::ThrottleChannel.interval = 1000;
+    }
+  }
 }
 
 void CH4_Handler() {
-	if ((TC_GetStatus(CH4_TC, CH4_CHANNEL) & TC_SR_LDRBS) == TC_SR_LDRBS) {
+  if ((TC_GetStatus(CH4_TC, CH4_CHANNEL) & TC_SR_LDRBS) == TC_SR_LDRBS) {
 
-		YawChannel.EDGE_RISING = CH4_TC->TC_CHANNEL[CH4_CHANNEL].TC_RA;
-		YawChannel.EDGE_FALLING = CH4_TC->TC_CHANNEL[CH4_CHANNEL].TC_RB;
+    RadioControl::YawChannel.risingTime = CH4_TC->TC_CHANNEL[CH4_CHANNEL].TC_RA;
+    RadioControl::YawChannel.fallingTime = CH4_TC->TC_CHANNEL[CH4_CHANNEL].TC_RB;
 
-		YawChannel.timer = YawChannel.EDGE_FALLING - YawChannel.EDGE_RISING;
-	}
+    RadioControl::YawChannel.interval = RadioControl::YawChannel.fallingTime - RadioControl::YawChannel.risingTime;
+    RadioControl::YawChannel.interval = clockCyclesToMicroseconds(RadioControl::YawChannel.interval) * PRESCALER;
+  
+    if(RadioControl::calibrated){
+      RadioControl::YawChannel.interval = (RadioControl::YawChannel.interval - RadioControl::YawChannel.min) * 1000.0 / (RadioControl::YawChannel.max - RadioControl::YawChannel.min) + 1000.0;
+    
+      if(RadioControl::YawChannel.interval > 0xFFFF)
+        RadioControl::YawChannel.interval = 1000;
+    }
+  }
 }
 
 void CH5_Handler() {
-	if ((TC_GetStatus(CH5_TC, CH5_CHANNEL) & TC_SR_LDRBS) == TC_SR_LDRBS) {
+  if ((TC_GetStatus(CH5_TC, CH5_CHANNEL) & TC_SR_LDRBS) == TC_SR_LDRBS) {
 
-		SwitchChannel.EDGE_RISING = CH5_TC->TC_CHANNEL[CH5_CHANNEL].TC_RA;
-		SwitchChannel.EDGE_FALLING = CH5_TC->TC_CHANNEL[CH5_CHANNEL].TC_RB;
+    RadioControl::SwitchChannel.risingTime = CH5_TC->TC_CHANNEL[CH5_CHANNEL].TC_RA;
+    RadioControl::SwitchChannel.fallingTime = CH5_TC->TC_CHANNEL[CH5_CHANNEL].TC_RB;
 
-		SwitchChannel.timer = SwitchChannel.EDGE_FALLING - SwitchChannel.EDGE_RISING;
-	}
-}
-
-// 
-// CALIBRATION
-// 
-void calibrateRadio(){
-	LOG(NEW_LINE);
-	LOG(F("Calibrating Radio"));
-
-	uint32_t now = millis();
-	delay(500);
-	while(millis() - now < TIME_CALIBRATION){
-		if (RollChannel.timer < RollChannel.MIN) RollChannel.MIN = RollChannel.timer;
-		if (RollChannel.timer > RollChannel.MAX) RollChannel.MAX = RollChannel.timer;
-		if (PitchChannel.timer < PitchChannel.MIN) PitchChannel.MIN = PitchChannel.timer;
-		if (PitchChannel.timer > PitchChannel.MAX) PitchChannel.MAX = PitchChannel.timer;
-		if (ThrottleChannel.timer < ThrottleChannel.MIN) ThrottleChannel.MIN = ThrottleChannel.timer;
-		if (ThrottleChannel.timer > ThrottleChannel.MAX) ThrottleChannel.MAX = ThrottleChannel.timer;
-		if (YawChannel.timer < YawChannel.MIN) YawChannel.MIN = YawChannel.timer;
-		if (YawChannel.timer > YawChannel.MAX) YawChannel.MAX = YawChannel.timer;
-		if (SwitchChannel.timer < SwitchChannel.MIN) SwitchChannel.MIN = SwitchChannel.timer;
-		if (SwitchChannel.timer > SwitchChannel.MAX) SwitchChannel.MAX = SwitchChannel.timer;
-	
-		LOG((millis() - now) % 1000 == 0 ? "." : "\0");
-		delay(100);
-	}
-	LOG(NEW_LINE);
-
-	LOGln(F("--- Calibration values ---"));
-	LOG(F("RollChannel.MIN = "));	LOG(RollChannel.MIN);	LOGln(";");
-	LOG(F("RollChannel.MAX = "));	LOG(RollChannel.MAX);	LOGln(";");
-	LOG(F("PitchChannel.MIN = "));	LOG(PitchChannel.MIN);	LOGln(";");	
-	LOG(F("PitchChannel.MAX = "));	LOG(PitchChannel.MAX);	LOGln(";");
-	LOG(F("ThrottleChannel.MIN = "));	LOG(ThrottleChannel.MIN);	LOGln(";");
-	LOG(F("ThrottleChannel.MAX = "));	LOG(ThrottleChannel.MAX);	LOGln(";");
-	LOG(F("YawChannel.MIN = "));	LOG(YawChannel.MIN);	LOGln(";");
-	LOG(F("YawChannel.MAX = "));	LOG(YawChannel.MAX);	LOGln(";");
-	LOG(F("SwitchChannel.MIN = "));	LOG(SwitchChannel.MIN);	LOGln(";");
-	LOG(F("SwitchChannel.MAX = "));	LOG(SwitchChannel.MAX);	LOGln(";");
-	LOG(NEW_LINE);
-}
-
-
-void printRadioChannels(){
-	LOG("CH1: "); LOG(RollChannel.timer); LOG(TAB);
-	LOG("CH2: "); LOG(PitchChannel.timer); LOG(TAB);
-	LOG("CH3: "); LOG(ThrottleChannel.timer); LOG(TAB);
-	LOG("CH4: "); LOG(YawChannel.timer); LOG(TAB);
-	LOG("CH5: "); LOG(SwitchChannel.timer); LOG(NEW_LINE);
-}
-
-
-// 
-// RADIO BEGIN
-// 
-void RadioControl_begin(){
-
-	LOG("\nInitializing Radio Control...\n");
-
-	setupChannel1();
-	setupChannel2();
-	setupChannel3();
-	setupChannel4();
-	setupChannel5();
-
-#ifdef CALIBRATE_RADIO
-	calibrateRadio();
-#else
-	RollChannel.MIN = 48569;
-	RollChannel.MAX = 83114;
-	PitchChannel.MIN = 41063;
-	PitchChannel.MAX = 76719;
-	ThrottleChannel.MIN = 41104;
-	ThrottleChannel.MAX = 75815;
-	YawChannel.MIN = 41145;
-	YawChannel.MAX = 76308;
-	SwitchChannel.MIN = 41040;
-	SwitchChannel.MAX = 82168;
-#endif
-
-
-	digitalWrite(PIN_LED_DEBUG, 1);
-	delay(1000);
-
-
-	for (int i = 0; i < 100; i++){
-		float roll = mapFloat(RollChannel.timer, RollChannel.MIN, RollChannel.MAX, ROLL_MIN, ROLL_MAX);
-		float pitch = mapFloat(PitchChannel.timer, PitchChannel.MIN, PitchChannel.MAX, PITCH_MIN, PITCH_MAX);
-	
-		RollChannel.offset += roll;
-		PitchChannel.offset += pitch;
-		delay(30);
-	}
-
-	RollChannel.offset /= 100;
-	PitchChannel.offset /= 100;
-
-	RollChannel.offset -= (ROLL_MAX+ROLL_MIN)/2.0f;
-	PitchChannel.offset -= (PITCH_MAX+PITCH_MIN)/2.0f;
+    RadioControl::SwitchChannel.interval = RadioControl::SwitchChannel.fallingTime - RadioControl::SwitchChannel.risingTime;
+    RadioControl::SwitchChannel.interval = clockCyclesToMicroseconds(RadioControl::SwitchChannel.interval) * PRESCALER;
+  
+    if(RadioControl::calibrated){
+      RadioControl::SwitchChannel.interval = (RadioControl::SwitchChannel.interval - RadioControl::SwitchChannel.min) * 1000.0 / (RadioControl::SwitchChannel.max - RadioControl::SwitchChannel.min) + 1000.0;
+    
+      if(RadioControl::SwitchChannel.interval > 0xFFFF)
+        RadioControl::SwitchChannel.interval = 1000;
+    }
+  }
 }

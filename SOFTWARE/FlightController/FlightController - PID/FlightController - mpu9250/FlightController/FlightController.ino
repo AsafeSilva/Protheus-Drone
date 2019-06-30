@@ -13,7 +13,7 @@ github.com/AsafeSilva/Protheus-Drone
 
 > Data de Criação:	18/08/2017
 
-> Última modificação:	23/08/2018
+> Última modificação:	20/02/2019
 
 > Descrição do projeto:
 
@@ -91,12 +91,12 @@ void setup() {
 	// 
 	// Setup Radio Control
 	// 
-	RadioControl_begin();
+	RadioControl::begin();
 
 	// 
 	// Setup IMU
 	// 
-	waitActivation(&ThrottleChannel.timer, ThrottleChannel.MIN+1000, &YawChannel.timer, YawChannel.MAX-1000);
+	waitActivation(RadioControl::ThrottleChannel.getInterval(), RadioControl::YawChannel.getInterval());
 	if(!IMU::begin())	while(true);
 
 	// 
@@ -105,11 +105,11 @@ void setup() {
 	Stabilizer::begin();
 
 	LOGln();
-	LOGln("ARM:             --- Move the left stick down and to the right...");
-	LOGln("DISARM:          --- Move the left stick down and to the left...");
-	LOGln("ESC_CALIBRATION: --- Move the left stick up and to the right...");
+	LOGln(F("ARM:             --- Left Stick: Donw & Right + Right Stick: Down & Left"));
+	LOGln(F("DISARM:          --- Left Stick: Down & Left"));
+	LOGln(F("ESC_CALIBRATION: --- Left Stick: Up & Right"));
 	LOGln();
-	LOGln("\n------------ Let's fly! ------------\n");
+	LOGln(F("\n------------ Let's fly! ------------\n"));
 
 }
 
@@ -117,7 +117,7 @@ void setup() {
 
 void loop() {
 
-	droneChangeState(ThrottleChannel.timer, ThrottleChannel.MIN, ThrottleChannel.MAX, YawChannel.timer, YawChannel.MIN, YawChannel.MAX);
+	droneChangeState(RadioControl::RollChannel.read(), RadioControl::PitchChannel.read(), RadioControl::ThrottleChannel.read(), RadioControl::YawChannel.read());
 
 	// If drone DISARMED, Stop motors and resetPID
 	if(DroneState == DISARMED){
@@ -125,7 +125,7 @@ void loop() {
 
 		Motors::stop();
 	}else if(DroneState == ESC_CALIBRATION){
-		float throttle = mapFloat(ThrottleChannel.timer, ThrottleChannel.MIN, ThrottleChannel.MAX, MIN_DUTY_CYCLE, MAX_DUTY_CYCLE);
+		float throttle = mapFloat(RadioControl::ThrottleChannel.read(), 1000, 2000, MIN_DUTY_CYCLE, MAX_DUTY_CYCLE);
 		uint32_t powers[] = {throttle, throttle, throttle, throttle};
 		Motors::setPower(powers);
 
@@ -135,16 +135,14 @@ void loop() {
 	// If the data is ready...
 	if(IMU::readData()){
 
-		IMU::debug();
-
 		// Read Radio Control
-		float throttleSetPoint = mapFloat(ThrottleChannel.timer, ThrottleChannel.MIN, ThrottleChannel.MAX, MIN_DUTY_2FLY, MAX_DUTY_CYCLE);
-		float yawControl = mapFloat(YawChannel.timer, YawChannel.MIN, YawChannel.MAX, YAW_MIN, YAW_MAX);
-		float pitchControl = mapFloat(PitchChannel.timer, PitchChannel.MIN, PitchChannel.MAX, PITCH_MIN, PITCH_MAX);
-		float rollControl = mapFloat(RollChannel.timer, RollChannel.MIN, RollChannel.MAX, ROLL_MIN, ROLL_MAX);
+		float throttleSetPoint = mapFloat(RadioControl::ThrottleChannel.read(), 1000, 2000, MIN_DUTY_2FLY, MAX_DUTY_CYCLE);
+		float yawControl = RadioControl::YawChannel.read();
+		float pitchControl = RadioControl::PitchChannel.read();
+		float rollControl = RadioControl::RollChannel.read();
 
-		pitchControl -= PitchChannel.offset;
-		rollControl -= RollChannel.offset;
+		pitchControl -= 0; //RadioControl::PitchChannel.getOffset();
+		rollControl -= 0; //RadioControl::RollChannel.getOffset();
 
 		pitchControl = constrain(pitchControl, 1000, 2000);
 		rollControl = constrain(rollControl, 1000, 2000);
@@ -152,7 +150,7 @@ void loop() {
 		// Dead band in pitch and roll (+/- 8)
 		float yawSetPoint = 0, pitchSetPoint = 0, rollSetPoint = 0;
 
-		if(ThrottleChannel.timer > (ThrottleChannel.MIN + (ThrottleChannel.MAX - ThrottleChannel.MIN)*0.4)){
+		if(RadioControl::ThrottleChannel.read() > 1400){
 			if(yawControl < 1492) yawSetPoint = yawControl - 1492;
 			else if(yawControl > 1508) yawSetPoint = yawControl - 1508;
 		}
@@ -168,19 +166,10 @@ void loop() {
 		rollSetPoint = (rollSetPoint - IMU::getRoll() * 49.2f) / 3.0f; 
 		yawSetPoint /= 3.0f;
 
-		// === LOAD DATA TO INTERFACE
-		DataToSend[SendID::YAW_IN] = IMU::getGyroYaw();
-		DataToSend[SendID::YAW_SET] = yawSetPoint;
-		DataToSend[SendID::PITCH_IN] = IMU::getGyroPitch();
-		DataToSend[SendID::PITCH_SET] = pitchSetPoint;
-		DataToSend[SendID::ROLL_IN] = IMU::getGyroRoll();
-		DataToSend[SendID::ROLL_SET] = rollSetPoint;
-
 
 		// If drone is armed AND throttle is greater than 2%...
-		if((DroneState == ARMED) && 
-			(ThrottleChannel.timer > ThrottleChannel.MIN + (ThrottleChannel.MAX - ThrottleChannel.MIN)*0.02)){
-	
+		if((DroneState == ARMED) /*&& (RadioControl::ThrottleChannel.read() > 1020)*/){
+
 			// === CALCULATE PID
 			Stabilizer::throttleUpdateSetPoint(throttleSetPoint);
 
@@ -195,17 +184,26 @@ void loop() {
 	
 			Stabilizer::stabilize();
 
-			// === LOAD DATA TO INTERFACE
-			DataToSend[SendID::M1_VEL] = *(Motors::getPercentPower());
-			DataToSend[SendID::M2_VEL] = *(Motors::getPercentPower()+1);
-			DataToSend[SendID::M3_VEL] = *(Motors::getPercentPower()+2);
-			DataToSend[SendID::M4_VEL] = *(Motors::getPercentPower()+3);
-		}else{
+		}/*else if(DroneState == ARMED){
 			Stabilizer::reset();
-
+			
 			uint32_t powers[] = {MIN_DUTY_2FLY, MIN_DUTY_2FLY, MIN_DUTY_2FLY, MIN_DUTY_2FLY};
 			Motors::setPower(powers);
-		}
+		}*/
+
+
+		// === LOAD DATA TO INTERFACE
+		DataToSend[SendID::YAW_IN] = IMU::getGyroYaw();
+		DataToSend[SendID::YAW_SET] = yawSetPoint;
+		DataToSend[SendID::PITCH_IN] = IMU::getPitch();
+		DataToSend[SendID::PITCH_SET] = mapFloat(pitchControl, 1000, 2000, -10, 10);
+		DataToSend[SendID::ROLL_IN] = IMU::getRoll();
+		DataToSend[SendID::ROLL_SET] = mapFloat(rollControl, 1000, 2000, -10, 10);
+		DataToSend[SendID::M1_VEL] = *(Motors::getPercentPower());
+		DataToSend[SendID::M2_VEL] = *(Motors::getPercentPower()+1);
+		DataToSend[SendID::M3_VEL] = *(Motors::getPercentPower()+2);
+		DataToSend[SendID::M4_VEL] = *(Motors::getPercentPower()+3);
+
 
 		// === SEND DATA TO INTERFACE
 		SendDataToInterface();

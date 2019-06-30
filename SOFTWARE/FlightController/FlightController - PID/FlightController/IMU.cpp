@@ -64,8 +64,8 @@ bool IMU::begin(){
 
 	IMU::GyroCalibrate();
 	IMU::AccelCalibrate();
-	accelPitchBias = -0.99;
-	accelRollBias = -2.24;
+	accelPitchBias = -1.11;
+	accelRollBias = -2.62;
 
 	// Set starting angle
 	outCompPitch = accelPitch - accelPitchBias;
@@ -223,8 +223,8 @@ void IMU::AccelCalibrate(){
 	accelRollBias /= 500.0f;
 
 	LOGln("Accelerometer bias:");
-	LOG("accelPitchBias = "); LOG(accelPitchBias); LOG(";"); LOG(NEW_LINE);
-	LOG("accelRollBias = "); LOG(accelRollBias); LOG(";"); LOG(NEW_LINE);
+	LOG("\t\taccelPitchBias = "); LOG(accelPitchBias); LOG(";"); LOG(NEW_LINE);
+	LOG("\t\taccelRollBias = "); LOG(accelRollBias); LOG(";"); LOG(NEW_LINE);
 }
 
 void IMU::GyroCalibrate(){
