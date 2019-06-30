@@ -85,10 +85,10 @@ void Stabilizer::stabilize(){
 	float outPitch = computesFuzzyPID(fuzzyPitch, &pitch, dt);
 	float outRoll = computesFuzzyPID(fuzzyRoll, &roll, dt);
 
-	uint32_t m1 = outThrottle + outPitch + outYaw;
-	uint32_t m2 = outThrottle - outRoll - outYaw;
-	uint32_t m3 = outThrottle - outPitch + outYaw;
-	uint32_t m4 = outThrottle + outRoll - outYaw;
+	uint32_t m1 = outThrottle + outPitch + outRoll - outYaw;
+	uint32_t m2 = outThrottle + outPitch - outRoll + outYaw;
+	uint32_t m3 = outThrottle - outPitch - outRoll - outYaw;
+	uint32_t m4 = outThrottle - outPitch + outRoll + outYaw;
 
 	uint32_t powers[] = {
 		m1, m2, m3, m4
