@@ -95,23 +95,13 @@ const uint8_t MOTOR_PINS[MOTORS_COUNT] = {
 // 
 // RADIO CONTROL CALIBRATION VALUES
 // 
-#define ROLL_MIN 1294
-#define ROLL_MAX 1736
-#define PITCH_MIN 1308
-#define PITCH_MAX 1736
-#define THROTTLE_MIN 1072
-#define THROTTLE_MAX 1736
+#define ROLL_MIN 1296
+#define ROLL_MAX 1738
+#define PITCH_MIN 1310
+#define PITCH_MAX 1738
+#define THROTTLE_MIN 1082
+#define THROTTLE_MAX 1738
 #define YAW_MIN 1298
-#define YAW_MAX 1738
+#define YAW_MAX 1740
 #define SWITCH_MIN 982
 #define SWITCH_MAX 1966
-
-// 
-// RADIO CONTROL RANGES
-// 
-#define YAW_MIN			1000
-#define YAW_MAX			2000
-#define PITCH_MIN		2000
-#define PITCH_MAX		1000
-#define ROLL_MIN		1000
-#define ROLL_MAX		2000
