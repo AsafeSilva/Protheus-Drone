@@ -31,7 +31,7 @@ static void ledDebug(){
 	if(millis() - lastTime > interval){
 
 		ledState = !ledState;
-		digitalWrite(PIN_LED_DEBUG, ledState);
+		digitalWrite(PIN_LED_DEBUG2, ledState);
 
 		if(DroneState == ARMED)
 			interval = ledState ? 100 : 1000;
@@ -49,6 +49,8 @@ static void ledDebug(){
 
 // ***************************************************************************************
 static void waitActivation(volatile uint32_t *throttle, volatile uint32_t *yaw){
+
+	delay(500);
 	
 	LOGln("Move the left stick down and to the right...");
 

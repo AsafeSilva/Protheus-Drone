@@ -25,16 +25,17 @@
 // 
 // Calibration values
 // 
-#define ROLL_MIN 1318
-#define ROLL_MAX 1734
-#define PITCH_MIN 1284
-#define PITCH_MAX 1712
+#define ROLL_MIN 1294
+#define ROLL_MAX 1736
+#define PITCH_MIN 1308
+#define PITCH_MAX 1736
 #define THROTTLE_MIN 1072
-#define THROTTLE_MAX 1734
-#define YAW_MIN 1318
-#define YAW_MAX 1736
-#define SWITCH_MIN 980
-#define SWITCH_MAX 1964
+#define THROTTLE_MAX 1736
+#define YAW_MIN 1298
+#define YAW_MAX 1738
+#define SWITCH_MIN 982
+#define SWITCH_MAX 1966
+
 
 
 //
@@ -179,10 +180,19 @@ private:
       if (SwitchChannel.interval < SwitchChannel.min) SwitchChannel.min = SwitchChannel.interval;
       if (SwitchChannel.interval > SwitchChannel.max) SwitchChannel.max = SwitchChannel.interval;
 
-      LOG((millis() - now) % 1000 == 0 ? "." : "\0");
+      if ((millis() - now) % 1000 == 0){
+        LOG(".");
+        digitalWrite(PIN_LED_DEBUG1, !digitalRead(PIN_LED_DEBUG1));
+        digitalWrite(PIN_LED_DEBUG2, !digitalRead(PIN_LED_DEBUG2));
+      }else{
+        LOG("\0");
+      }
+
       delay(100);
     }
     LOG(NEW_LINE);
+    digitalWrite(PIN_LED_DEBUG1, 0);
+    digitalWrite(PIN_LED_DEBUG2, 0);
 
 
     LOGln(F("--- Calibration values ---"));
@@ -219,6 +229,7 @@ public:
 
 
     if(digitalRead(PIN_RADIO_CALIB) == false){
+
       calibrate();
 
       calibrated = true;
@@ -236,9 +247,6 @@ public:
 
       calibrated = true;
     }
-
-    digitalWrite(PIN_LED_DEBUG, 1);
-    delay(1000);
 
     // Calculates offset
     // for (int i = 0; i < 100; i++) {

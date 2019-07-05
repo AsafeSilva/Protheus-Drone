@@ -64,9 +64,12 @@ const uint8_t MOTOR_PINS[MOTORS_COUNT] = {
 };
 
 // 
-// LEDs FOR DEBUG
+// LEDs
 // 
-#define PIN_LED_DEBUG -1
+#define PIN_LED_DEBUG1 A2
+#define PIN_LED_DEBUG2 A1
+#define PIN_LED_RIGHT 10
+#define PIN_LED_LEFT 12
 
 // 
 // I2C COMMUNICATION

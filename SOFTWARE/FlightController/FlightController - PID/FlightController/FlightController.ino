@@ -63,10 +63,12 @@ IFPE Campus Caruaru, com a Universidad de Chile, INACAP.
 void setup() {
 
 	// 
-	// Initialize led for debug
+	// Initialize leds for debug
 	// 
-	pinMode(PIN_LED_DEBUG, OUTPUT);
-	digitalWrite(PIN_LED_DEBUG, 0);
+	pinMode(PIN_LED_DEBUG1, OUTPUT);
+	pinMode(PIN_LED_DEBUG2, OUTPUT);
+	pinMode(PIN_LED_RIGHT, OUTPUT);
+	pinMode(PIN_LED_LEFT, OUTPUT);
 
 	// 
 	// Setup Serial Communication
@@ -88,8 +90,8 @@ void setup() {
 	// 
 	// Setup IMU
 	// 
-	// waitActivation(RadioControl::ThrottleChannel.getInterval(), RadioControl::YawChannel.getInterval());
-	// if(!IMU::begin())	while(true);
+	waitActivation(RadioControl::ThrottleChannel.getInterval(), RadioControl::YawChannel.getInterval());
+	if(!IMU::begin())	while(true);
 
 	// 
 	// Setup Stabilizer
@@ -107,9 +109,6 @@ void setup() {
 
 
 void loop() {
-
-	RadioControl::debug();
-	return;
 
 	droneChangeState(RadioControl::RollChannel.read(), RadioControl::PitchChannel.read(), RadioControl::ThrottleChannel.read(), RadioControl::YawChannel.read());
 
