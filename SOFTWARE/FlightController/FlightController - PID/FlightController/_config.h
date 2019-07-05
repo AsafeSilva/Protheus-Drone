@@ -64,11 +64,6 @@ const uint8_t MOTOR_PINS[MOTORS_COUNT] = {
 };
 
 // 
-// LOGIC LEVEL CONVERTER
-// 
-#define PIN_LEVEL_CONVERTER	A4
-
-// 
 // LEDs FOR DEBUG
 // 
 #define PIN_LED_DEBUG -1

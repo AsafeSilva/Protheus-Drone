@@ -63,14 +63,6 @@ IFPE Campus Caruaru, com a Universidad de Chile, INACAP.
 void setup() {
 
 	// 
-	// Initialize Logic level converter
-	// 
-	pinMode(PIN_LEVEL_CONVERTER, OUTPUT);
-	digitalWrite(PIN_LEVEL_CONVERTER, 0);
-	delay(100);
-	digitalWrite(PIN_LEVEL_CONVERTER, 1);
-
-	// 
 	// Initialize led for debug
 	// 
 	pinMode(PIN_LED_DEBUG, OUTPUT);
