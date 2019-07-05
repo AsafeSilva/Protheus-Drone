@@ -11,21 +11,13 @@
 //
 //	SERIAL COMMUNICATION
 //
-#define DEBUG			// un/comment to enable/disable Serial
-#define SERIAL_SPEED	38400
+#define SERIAL_SPEED	115200
 #define NEW_LINE		"\n"
 #define TAB 			"\t"
-#ifdef DEBUG
-	#define LOG 			Serial.print
-	#define LOGln 			Serial.println
-	#define SerialRead		Serial.read
-	#define Serial_begin 	Serial.begin
-#else
-	#define LOG
-	#define LOGln
-	#define SerialRead
-	#define Serial_begin
-#endif
+#define LOG 			Serial.print
+#define LOGln 			Serial.println
+#define SerialRead		Serial.read
+#define Serial_begin 	Serial.begin
 
 
 // 

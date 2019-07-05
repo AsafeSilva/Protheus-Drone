@@ -89,7 +89,8 @@ void setup() {
 	// 
 	// Setup IMU
 	// 
-	waitActivation(RadioControl::ThrottleChannel.getInterval(), RadioControl::YawChannel.getInterval());
+	waitActivation(RadioControl::RollChannel.getInterval(), RadioControl::PitchChannel.getInterval(),
+					 RadioControl::ThrottleChannel.getInterval(), RadioControl::YawChannel.getInterval());
 	if(!IMU::begin()){
 		DroneState = ERROR;
 		while(true)
@@ -103,7 +104,7 @@ void setup() {
 
 	LOGln();
 	LOGln(F("ARM:             --- Left Stick: Donw & Right + Right Stick: Down & Left"));
-	LOGln(F("DISARM:          --- Left Stick: Down & Left"));
+	LOGln(F("DISARM:          --- Left Stick: Down & Left + Right Stick: Down & Right"));
 	LOGln(F("ESC_CALIBRATION: --- Left Stick: Up & Right"));
 	LOGln();
 	LOGln(F("\n------------ Let's fly! ------------\n"));

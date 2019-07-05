@@ -79,15 +79,20 @@ static void ledDebug(){
 // =======================================================================================
 
 // ***************************************************************************************
-static void waitActivation(volatile uint32_t *throttle, volatile uint32_t *yaw){
+static void waitActivation(volatile uint32_t *roll, volatile uint32_t *pitch, volatile uint32_t *throttle, volatile uint32_t *yaw){
+
+	delay(1000);
 	
-	LOGln("Move the left stick down and to the right...");
+	LOGln("<Left Stick: Up & Left + Right Stick: Up & Right> to continue...");
 
 	DroneState = WAIT_ACTIVATION;
 	while(true){
 		ledDebug();
 
-		if((*throttle < 1100) && (*yaw < 1100))
+		if((*roll == 0) || (*pitch == 0) || (*throttle == 0) || (*yaw == 0))
+			continue;
+
+		if((*roll > 1900) && (*pitch < 1100) && (*throttle > 1900) && (*yaw > 1900))
 			break;
 	}
 	DroneState = DISARMED;
@@ -108,7 +113,7 @@ static void droneChangeState(uint32_t roll, uint32_t pitch, uint32_t throttle, u
 
 	}else if(DroneState != DISARMED){
 
-		if((throttle < 1100) && (yaw > 1900)){
+		if((roll > 1900) && (pitch > 1900) && (throttle < 1100) && (yaw > 1900)){
 			LOGln(DroneState != DISARMED ? "STATE: DISARMED!" : "");
 			DroneState = DISARMED;
 		}
