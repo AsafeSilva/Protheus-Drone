@@ -17,27 +17,6 @@
 
 */
 
-// 
-// Calibration time
-// 
-#define TIME_CALIBRATION  10000  // ms
-
-// 
-// Calibration values
-// 
-#define ROLL_MIN 1294
-#define ROLL_MAX 1736
-#define PITCH_MIN 1308
-#define PITCH_MAX 1736
-#define THROTTLE_MIN 1072
-#define THROTTLE_MAX 1736
-#define YAW_MIN 1298
-#define YAW_MAX 1738
-#define SWITCH_MIN 982
-#define SWITCH_MAX 1966
-
-
-
 //
 // GENERAL DEFINITIONS
 //

@@ -13,7 +13,7 @@ github.com/AsafeSilva/Protheus-Drone
 
 > Data de Criação:	18/08/2017
 
-> Última modificação:	20/02/2019
+> Última modificação:	05/07/2019
 
 > Descrição do projeto:
 
@@ -23,7 +23,6 @@ github.com/AsafeSilva/Protheus-Drone
 		- BMP 180 [Barômetro]
 		- Rádio [Receptor]
 		- Bluetooth
-		- Conversor de Nível [3V3 <-> 5V] !!! NECESSÁRIO POIS O ARDUINO DUE TRABALHA COM 3V3 !!!
 		- Electronic Speed Control (ESC)
 	<> Software
 		- 1° Passo		"Leitura do rádio controle"

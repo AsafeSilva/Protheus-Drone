@@ -84,7 +84,7 @@ bool IMU::begin(){
 bool IMU::readData(){
 
 	if (!imu.getIntDataReadyStatus()){
-		LOGln("... data not ready ...");
+		LOGln("... IMU data isn't available ...");
 		return false;
 	}
 
