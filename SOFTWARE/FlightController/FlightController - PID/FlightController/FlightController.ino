@@ -64,10 +64,10 @@ void setup() {
 	// 
 	// Initialize leds for debug
 	// 
-	pinMode(PIN_LED_DEBUG1, OUTPUT);
-	pinMode(PIN_LED_DEBUG2, OUTPUT);
-	pinMode(PIN_LED_RIGHT, OUTPUT);
-	pinMode(PIN_LED_LEFT, OUTPUT);
+	pinMode(PIN_LED_DEBUG1, OUTPUT); digitalWrite(PIN_LED_DEBUG1, 1);
+	pinMode(PIN_LED_DEBUG2, OUTPUT); digitalWrite(PIN_LED_DEBUG2, 0);
+	pinMode(PIN_LED_RIGHT, OUTPUT);	digitalWrite(PIN_LED_RIGHT, 0);
+	pinMode(PIN_LED_LEFT, OUTPUT); digitalWrite(PIN_LED_LEFT, 0);
 
 	// 
 	// Setup Serial Communication
@@ -90,7 +90,11 @@ void setup() {
 	// Setup IMU
 	// 
 	waitActivation(RadioControl::ThrottleChannel.getInterval(), RadioControl::YawChannel.getInterval());
-	if(!IMU::begin())	while(true);
+	if(!IMU::begin()){
+		DroneState = ERROR;
+		while(true)
+			ledDebug();
+	}
 
 	// 
 	// Setup Stabilizer

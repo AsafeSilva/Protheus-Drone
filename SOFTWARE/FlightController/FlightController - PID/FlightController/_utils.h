@@ -9,12 +9,12 @@ enum STATE{
 	DISARMED,
 	ARMED,
 	WAIT_ACTIVATION,
-	ESC_CALIBRATION
+	ESC_CALIBRATION,
+	ERROR
 };
 
 static STATE DroneState = DISARMED;
 // =======================================================================================
-
 
 // ***************************************************************************************
 static float mapFloat(float x, float in_min, float in_max, float out_min, float out_max){
@@ -23,34 +23,63 @@ static float mapFloat(float x, float in_min, float in_max, float out_min, float 
 // =======================================================================================
 
 // ***************************************************************************************
-static bool ledState = false;
-static unsigned long lastTime;
-static unsigned long interval;
+static bool ledDebugState1 = false;
+static bool ledDebugState2 = false;
+static bool ledRightState = false;
+static bool ledLeftState = false;
+static unsigned long lastTimeDebug;
+static unsigned long intervalDebug;
+
 static void ledDebug(){
 
-	if(millis() - lastTime > interval){
+	if(millis() - lastTimeDebug > intervalDebug){
 
-		ledState = !ledState;
-		digitalWrite(PIN_LED_DEBUG2, ledState);
+		ledDebugState2 = !ledDebugState2;
+		ledDebugState1 = !ledDebugState1;
+		
+		if(DroneState == ARMED){
+			intervalDebug = ledDebugState2 ? 100 : 1000;
 
-		if(DroneState == ARMED)
-			interval = ledState ? 100 : 1000;
-		if(DroneState == DISARMED)
-			interval = 500;
-		if(DroneState == WAIT_ACTIVATION)
-			interval = ledState ? 900 : 100;
-		if(DroneState == ESC_CALIBRATION)
-			interval = 0;
+			digitalWrite(PIN_LED_DEBUG2, ledDebugState2);
+			digitalWrite(PIN_LED_RIGHT, !ledDebugState2);
+			digitalWrite(PIN_LED_LEFT, !ledDebugState2);
 
-		lastTime = millis();
+		}else if(DroneState == DISARMED){
+			intervalDebug = 500;
+
+			digitalWrite(PIN_LED_DEBUG2, ledDebugState2);
+			digitalWrite(PIN_LED_RIGHT, ledDebugState2);
+			digitalWrite(PIN_LED_LEFT, !ledDebugState2);
+
+		}else if(DroneState == WAIT_ACTIVATION){
+			intervalDebug = ledDebugState2 ? 900 : 100;
+
+			digitalWrite(PIN_LED_DEBUG2, ledDebugState2);
+			digitalWrite(PIN_LED_RIGHT, 0);
+			digitalWrite(PIN_LED_LEFT, 0);
+
+		}else if(DroneState == ESC_CALIBRATION){
+			intervalDebug = 0;
+
+			digitalWrite(PIN_LED_DEBUG2, ledDebugState2);
+			digitalWrite(PIN_LED_RIGHT, 0);
+			digitalWrite(PIN_LED_LEFT, 0);
+		}else if (DroneState == ERROR){
+			intervalDebug = 200;
+
+			digitalWrite(PIN_LED_DEBUG1, ledDebugState1);
+			digitalWrite(PIN_LED_DEBUG2, 0);
+			digitalWrite(PIN_LED_RIGHT, 0);
+			digitalWrite(PIN_LED_LEFT, 0);
+		}
+
+		lastTimeDebug = millis();
 	}
 }
 // =======================================================================================
 
 // ***************************************************************************************
 static void waitActivation(volatile uint32_t *throttle, volatile uint32_t *yaw){
-
-	delay(500);
 	
 	LOGln("Move the left stick down and to the right...");
 
