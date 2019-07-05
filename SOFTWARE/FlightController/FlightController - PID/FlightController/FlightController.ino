@@ -96,8 +96,8 @@ void setup() {
 	// 
 	// Setup IMU
 	// 
-	waitActivation(RadioControl::ThrottleChannel.getInterval(), RadioControl::YawChannel.getInterval());
-	if(!IMU::begin())	while(true);
+	// waitActivation(RadioControl::ThrottleChannel.getInterval(), RadioControl::YawChannel.getInterval());
+	// if(!IMU::begin())	while(true);
 
 	// 
 	// Setup Stabilizer
@@ -115,6 +115,9 @@ void setup() {
 
 
 void loop() {
+
+	RadioControl::debug();
+	return;
 
 	droneChangeState(RadioControl::RollChannel.read(), RadioControl::PitchChannel.read(), RadioControl::ThrottleChannel.read(), RadioControl::YawChannel.read());
 

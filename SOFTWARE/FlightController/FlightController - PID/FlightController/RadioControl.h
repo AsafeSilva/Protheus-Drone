@@ -9,28 +9,32 @@
 
   Channels:
     TC    Chan   NVIC irq   Handler       PMC ID   Arduino Pin
-    TC0   0      TC0_IRQn   TC0_Handler   ID_TC0   D2     (TIOA0) CHANNEL 5
-    TC2   1      TC7_IRQn   TC7_Handler   ID_TC7   D3     (TIOA7) CHANNEL 4
-    TC2   0      TC6_IRQn   TC6_Handler   ID_TC6   D5     (TIOA6) CHANNEL 3
-    TC2   2      TC8_IRQn   TC8_Handler   ID_TC8   D11    (TIOA8) CHANNEL 2
-    TC0   1      TC1_IRQn   TC1_Handler   ID_TC1   61/A7  (TIOA1) CHANNEL 1
+    TC2   2      TC8_IRQn   TC8_Handler   ID_TC8   D11    (TIOA8) CHANNEL 1
+    TC2   0      TC6_IRQn   TC6_Handler   ID_TC6   D5     (TIOA6) CHANNEL 2
+    TC2   1      TC7_IRQn   TC7_Handler   ID_TC7   D3     (TIOA7) CHANNEL 3
+    TC0   0      TC0_IRQn   TC0_Handler   ID_TC0   D2     (TIOA0) CHANNEL 4
+    TC0   1      TC1_IRQn   TC1_Handler   ID_TC1   61/A7  (TIOA1) CHANNEL 5
 
 */
 
-// un/comment to enable/disable Calibration of channels
-// #define CALIBRATE_RADIO
+// 
+// Calibration time
+// 
 #define TIME_CALIBRATION  10000  // ms
 
-#define ROLL_MIN 1322
-#define ROLL_MAX 1738
-#define PITCH_MIN 1312
-#define PITCH_MAX 1738
+// 
+// Calibration values
+// 
+#define ROLL_MIN 1318
+#define ROLL_MAX 1734
+#define PITCH_MIN 1284
+#define PITCH_MAX 1712
 #define THROTTLE_MIN 1072
-#define THROTTLE_MAX 1738
-#define YAW_MIN 1322
-#define YAW_MAX 1740
-#define SWITCH_MIN 982
-#define SWITCH_MAX 1968
+#define THROTTLE_MAX 1734
+#define YAW_MIN 1318
+#define YAW_MAX 1736
+#define SWITCH_MIN 980
+#define SWITCH_MAX 1964
 
 
 //
@@ -39,56 +43,55 @@
 #define CLOCK_SELECTION TC_CMR_TCCLKS_TIMER_CLOCK1
 #define PRESCALER 2
 
-
 //
-// DEFINITIONS OF CHANNEL 5
+// DEFINITIONS OF CHANNEL 1
 //
-#define CH5_TC TC0
-#define CH5_CHANNEL 0
-#define CH5_IRQn TC0_IRQn
-#define CH5_Handler TC0_Handler
-#define CH5_ID ID_TC0
-#define CH5_PIN 2
-
-//
-// DEFINITIONS OF CHANNEL 4
-//
-#define CH4_TC TC2
-#define CH4_CHANNEL 1
-#define CH4_IRQn TC7_IRQn
-#define CH4_Handler TC7_Handler
-#define CH4_ID ID_TC7
-#define CH4_PIN 3
-
-//
-// DEFINITIONS OF CHANNEL 3
-//
-#define CH3_TC TC2
-#define CH3_CHANNEL 0
-#define CH3_IRQn TC6_IRQn
-#define CH3_Handler TC6_Handler
-#define CH3_ID ID_TC6
-#define CH3_PIN 5
+#define CH1_TC TC2
+#define CH1_CHANNEL 2
+#define CH1_IRQn TC8_IRQn
+#define CH1_Handler TC8_Handler
+#define CH1_ID ID_TC8
+#define CH1_PIN 11
 
 //
 // DEFINITIONS OF CHANNEL 2
 //
 #define CH2_TC TC2
-#define CH2_CHANNEL 2
-#define CH2_IRQn TC8_IRQn
-#define CH2_Handler TC8_Handler
-#define CH2_ID ID_TC8
-#define CH2_PIN 11
+#define CH2_CHANNEL 0
+#define CH2_IRQn TC6_IRQn
+#define CH2_Handler TC6_Handler
+#define CH2_ID ID_TC6
+#define CH2_PIN 5
 
 //
-// DEFINITIONS OF CHANNEL 1
+// DEFINITIONS OF CHANNEL 3
 //
-#define CH1_TC TC0
-#define CH1_CHANNEL 1
-#define CH1_IRQn TC1_IRQn
-#define CH1_Handler TC1_Handler
-#define CH1_ID ID_TC1
-#define CH1_PIN 61
+#define CH3_TC TC2
+#define CH3_CHANNEL 1
+#define CH3_IRQn TC7_IRQn
+#define CH3_Handler TC7_Handler
+#define CH3_ID ID_TC7
+#define CH3_PIN 3
+
+//
+// DEFINITIONS OF CHANNEL 4
+//
+#define CH4_TC TC0
+#define CH4_CHANNEL 0
+#define CH4_IRQn TC0_IRQn
+#define CH4_Handler TC0_Handler
+#define CH4_ID ID_TC0
+#define CH4_PIN 2
+
+//
+// DEFINITIONS OF CHANNEL 5
+//
+#define CH5_TC TC0
+#define CH5_CHANNEL 1
+#define CH5_IRQn TC1_IRQn
+#define CH5_Handler TC1_Handler
+#define CH5_ID ID_TC1
+#define CH5_PIN 61
 
 
 class RadioChannel{
@@ -206,30 +209,33 @@ public:
 
     LOG("\nInitializing RadioControl...\n");
 
+    pinMode(PIN_RADIO_CALIB, INPUT_PULLUP);
+
     RollChannel.begin(CH1_PIN, CH1_ID, CH1_TC, CH1_CHANNEL, CH1_IRQn);
     PitchChannel.begin(CH2_PIN, CH2_ID, CH2_TC, CH2_CHANNEL, CH2_IRQn);
     ThrottleChannel.begin(CH3_PIN, CH3_ID, CH3_TC, CH3_CHANNEL, CH3_IRQn);
     YawChannel.begin(CH4_PIN, CH4_ID, CH4_TC, CH4_CHANNEL, CH4_IRQn);
     SwitchChannel.begin(CH5_PIN, CH5_ID, CH5_TC, CH5_CHANNEL, CH5_IRQn);
 
-#ifdef CALIBRATE_RADIO
-    calibrate();
 
-    calibrated = true;
-#else
-    RollChannel.min = ROLL_MIN;
-    RollChannel.max = ROLL_MAX;
-    PitchChannel.min = PITCH_MIN;
-    PitchChannel.max = PITCH_MAX;
-    ThrottleChannel.min = THROTTLE_MIN;
-    ThrottleChannel.max = THROTTLE_MAX;
-    YawChannel.min = YAW_MIN;
-    YawChannel.max = YAW_MAX;
-    SwitchChannel.min = SWITCH_MIN;
-    SwitchChannel.max = SWITCH_MAX;
+    if(digitalRead(PIN_RADIO_CALIB) == false){
+      calibrate();
 
-    calibrated = true;
-#endif
+      calibrated = true;
+    }else{
+      RollChannel.min = ROLL_MIN;
+      RollChannel.max = ROLL_MAX;
+      PitchChannel.min = PITCH_MIN;
+      PitchChannel.max = PITCH_MAX;
+      ThrottleChannel.min = THROTTLE_MIN;
+      ThrottleChannel.max = THROTTLE_MAX;
+      YawChannel.min = YAW_MIN;
+      YawChannel.max = YAW_MAX;
+      SwitchChannel.min = SWITCH_MIN;
+      SwitchChannel.max = SWITCH_MAX;
+
+      calibrated = true;
+    }
 
     digitalWrite(PIN_LED_DEBUG, 1);
     delay(1000);
