@@ -24,10 +24,10 @@
 // INTERFACE BLUETOOTH COMMUNICATION
 // 
 #define BT_SPEED	38400
-#define BT_LOG 		Serial1.print
-#define BT_Read		Serial1.read
-#define BT_begin 	Serial1.begin
-#define BT_Event	void serialEvent1
+#define BT_LOG 		Serial3.print
+#define BT_Read		Serial3.read
+#define BT_begin 	Serial3.begin
+#define BT_Event	void serialEvent3
 
 
 // 
