@@ -83,7 +83,7 @@ static void waitActivation(volatile uint32_t *roll, volatile uint32_t *pitch, vo
 
 	delay(1000);
 	
-	LOGln("<Left Stick: Up & Left + Right Stick: Up & Right> to continue...");
+	LOGln("[Left Stick: Up & Left] + [Right Stick: Up & Right] to continue...");
 
 	DroneState = WAIT_ACTIVATION;
 	while(true){

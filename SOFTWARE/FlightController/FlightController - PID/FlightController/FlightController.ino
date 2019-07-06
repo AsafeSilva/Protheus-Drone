@@ -103,9 +103,9 @@ void setup() {
 	Stabilizer::begin();
 
 	LOGln();
-	LOGln(F("ARM:             --- Left Stick: Donw & Right + Right Stick: Down & Left"));
-	LOGln(F("DISARM:          --- Left Stick: Down & Left + Right Stick: Down & Right"));
-	LOGln(F("ESC_CALIBRATION: --- Left Stick: Up & Right"));
+	LOGln(F("ARM:             ---- Left Stick: Donw & Right + Right Stick: Down & Left"));
+	LOGln(F("DISARM:          ---- Left Stick: Down & Left + Right Stick: Down & Right"));
+	LOGln(F("ESC_CALIBRATION: ---- Left Stick: Up & Right"));
 	LOGln();
 	LOGln(F("\n------------ Let's fly! ------------\n"));
 
