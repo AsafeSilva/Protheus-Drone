@@ -74,10 +74,10 @@ void Stabilizer::stabilize(){
 	float outPitch = pidPitch.compute(dt);
 	float outRoll = pidRoll.compute(dt);
 
-	uint32_t m1 = outThrottle + outPitch + outRoll - outYaw;
-	uint32_t m2 = outThrottle + outPitch - outRoll + outYaw;
-	uint32_t m3 = outThrottle - outPitch - outRoll - outYaw;
-	uint32_t m4 = outThrottle - outPitch + outRoll + outYaw;
+	uint32_t m1 = outThrottle - outPitch + outRoll - outYaw;
+	uint32_t m2 = outThrottle - outPitch - outRoll + outYaw;
+	uint32_t m3 = outThrottle + outPitch - outRoll - outYaw;
+	uint32_t m4 = outThrottle + outPitch + outRoll + outYaw;
 
 	uint32_t powers[] = {
 		m1, m2, m3, m4
