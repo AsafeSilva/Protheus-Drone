@@ -13,7 +13,7 @@ github.com/AsafeSilva/Protheus-Drone
 
 > Data de Criação:	18/08/2017
 
-> Última modificação:	06/08/2019
+> Última modificação:	07/08/2019
 
 > Descrição do projeto:
 
@@ -51,6 +51,7 @@ IFPE Campus Caruaru, com a Universidad de Chile, INACAP.
 #include <Kalman.h>
 
 // -- Modules
+#include "System.h"
 #include "InterfaceComm.h"
 #include "RadioControl.h"
 #include "Motors.h"
@@ -89,21 +90,12 @@ void setup() {
 	// 
 	// Setup IMU
 	// 
-	waitActivation(RadioControl::RollChannel.getInterval(), RadioControl::PitchChannel.getInterval(),
+	System::waitActivation(RadioControl::RollChannel.getInterval(), RadioControl::PitchChannel.getInterval(),
 					 RadioControl::ThrottleChannel.getInterval(), RadioControl::YawChannel.getInterval());
 
-	int imuError = IMU::begin();
-	if(imuError != -1){
-		switch (imuError){
-			case ERROR_MPU_CONNECTION:
-				DroneState = ERROR_MPU_CONNECTION;
-				break;
-			case ERROR_MPU_GYRO:
-				DroneState = ERROR_MPU_GYRO;
-				break;
-		}
+	if(!IMU::begin()){
 		while(true)
-			ledDebug();
+			System::ledDebug();
 	}
 
 	// 
@@ -123,14 +115,14 @@ void setup() {
 
 void loop() {
 
-	droneChangeState(RadioControl::RollChannel.read(), RadioControl::PitchChannel.read(), RadioControl::ThrottleChannel.read(), RadioControl::YawChannel.read());
+	System::managerDroneState(RadioControl::RollChannel.read(), RadioControl::PitchChannel.read(), RadioControl::ThrottleChannel.read(), RadioControl::YawChannel.read());
 
 	// If drone DISARMED, Stop motors and resetPID
-	if(DroneState == DISARMED){
+	if(System::DroneState == DISARMED){
 		Stabilizer::reset();
 
 		Motors::stop();
-	}else if(DroneState == ESC_CALIBRATION){
+	}else if(System::DroneState == ESC_CALIBRATION){
 		float throttle = mapFloat(RadioControl::ThrottleChannel.read(), 1000, 2000, MIN_DUTY_CYCLE, MAX_DUTY_CYCLE);
 		uint32_t powers[] = {throttle, throttle, throttle, throttle};
 		Motors::setPower(powers);
@@ -177,7 +169,7 @@ void loop() {
 
 
 		// If drone is armed AND throttle is greater than 2%...
-		if((DroneState == ARMED) /*&& (RadioControl::ThrottleChannel.read() > 1020)*/){
+		if((System::DroneState == ARMED) /*&& (RadioControl::ThrottleChannel.read() > 1020)*/){
 
 			// === CALCULATE PID
 			Stabilizer::throttleUpdateSetPoint(throttleSetPoint);

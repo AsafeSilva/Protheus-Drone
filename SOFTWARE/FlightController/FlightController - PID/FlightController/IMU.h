@@ -8,6 +8,7 @@
 
 #include "_config.h"
 #include "_utils.h"
+#include "System.h"
 
 
 class IMU{
@@ -44,8 +45,8 @@ private:
 public:
 
 	// Initializes communication and performs sensor configuration
-	// Returns 'true' if the connection was successful
-	static int begin();
+	// Returns 'true' if the connection and calibration was successful
+	static bool begin();
 
 	// Performs reading of the sensors
 	// Returns 'true' if the reading was successful

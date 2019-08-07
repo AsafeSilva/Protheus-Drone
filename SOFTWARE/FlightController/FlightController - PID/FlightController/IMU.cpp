@@ -43,7 +43,7 @@ float IMU::rollAngle = 0;
 unsigned long IMU::lastComputeTime;
 
 
-int IMU::begin(){
+bool IMU::begin(){
 
 	LOG("\nInitializing Reference System (IMU + Barometer)...\n");
 
@@ -58,7 +58,8 @@ int IMU::begin(){
 
 	if (!imu.testConnection()){
 		LOGln("Could not connect to MPU6050 (Gyro and Accel) :(");
-		return ERROR_MPU_CONNECTION;
+		System::DroneState = ERROR_MPU_CONNECTION;
+		return false;
 	}
 
 	// Wait to calibrate gyroscope and accelerometer
@@ -69,7 +70,8 @@ int IMU::begin(){
 
 	if(!testGyroValues()){
 		LOGln("Bias too high on gyro :(");
-		return ERROR_MPU_GYRO;
+		System::DroneState = ERROR_MPU_GYRO;
+		return false;
 	}
 
 	// Set starting angle
@@ -82,7 +84,7 @@ int IMU::begin(){
 
 	LOGln("MPU6050 was successfully connected :)");
 
-	return -1;
+	return true;
 }
 
 
