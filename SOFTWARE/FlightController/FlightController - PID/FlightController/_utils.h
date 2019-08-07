@@ -10,7 +10,8 @@ enum STATE{
 	ARMED,
 	WAIT_ACTIVATION,
 	ESC_CALIBRATION,
-	ERROR
+	ERROR_MPU_CONNECTION,
+	ERROR_MPU_GYRO
 };
 
 static STATE DroneState = DISARMED;
@@ -40,35 +41,42 @@ static void ledDebug(){
 		if(DroneState == ARMED){
 			intervalDebug = ledDebugState2 ? 100 : 1000;
 
-			digitalWrite(PIN_LED_DEBUG2, ledDebugState2);
+			digitalWrite(PIN_LED_DEBUG, ledDebugState2);
 			digitalWrite(PIN_LED_RIGHT, !ledDebugState2);
 			digitalWrite(PIN_LED_LEFT, !ledDebugState2);
 
 		}else if(DroneState == DISARMED){
 			intervalDebug = 500;
 
-			digitalWrite(PIN_LED_DEBUG2, ledDebugState2);
+			digitalWrite(PIN_LED_DEBUG, ledDebugState2);
 			digitalWrite(PIN_LED_RIGHT, ledDebugState2);
 			digitalWrite(PIN_LED_LEFT, !ledDebugState2);
 
 		}else if(DroneState == WAIT_ACTIVATION){
 			intervalDebug = ledDebugState2 ? 900 : 100;
 
-			digitalWrite(PIN_LED_DEBUG2, ledDebugState2);
+			digitalWrite(PIN_LED_DEBUG, ledDebugState2);
 			digitalWrite(PIN_LED_RIGHT, 0);
 			digitalWrite(PIN_LED_LEFT, 0);
 
 		}else if(DroneState == ESC_CALIBRATION){
 			intervalDebug = 0;
 
-			digitalWrite(PIN_LED_DEBUG2, ledDebugState2);
+			digitalWrite(PIN_LED_DEBUG, ledDebugState2);
 			digitalWrite(PIN_LED_RIGHT, 0);
 			digitalWrite(PIN_LED_LEFT, 0);
-		}else if (DroneState == ERROR){
-			intervalDebug = 200;
+		}else if (DroneState == ERROR_MPU_CONNECTION){
+			intervalDebug = 100;
 
-			digitalWrite(PIN_LED_DEBUG1, ledDebugState1);
-			digitalWrite(PIN_LED_DEBUG2, 0);
+			digitalWrite(PIN_LED_ERROR, ledDebugState1);
+			digitalWrite(PIN_LED_DEBUG, 0);
+			digitalWrite(PIN_LED_RIGHT, 0);
+			digitalWrite(PIN_LED_LEFT, 0);
+		}else if(DroneState == ERROR_MPU_GYRO){
+			intervalDebug = 500;
+
+			digitalWrite(PIN_LED_ERROR, ledDebugState1);
+			digitalWrite(PIN_LED_DEBUG, 0);
 			digitalWrite(PIN_LED_RIGHT, 0);
 			digitalWrite(PIN_LED_LEFT, 0);
 		}

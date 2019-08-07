@@ -58,8 +58,8 @@ const uint8_t MOTOR_PINS[MOTORS_COUNT] = {
 // 
 // LEDs
 // 
-#define PIN_LED_DEBUG1 A2
-#define PIN_LED_DEBUG2 A1
+#define PIN_LED_ERROR A2
+#define PIN_LED_DEBUG A1
 #define PIN_LED_RIGHT 10
 #define PIN_LED_LEFT 12
 
@@ -71,8 +71,8 @@ const uint8_t MOTOR_PINS[MOTORS_COUNT] = {
 // 
 // IMU CONFIGS
 // 
-#define ACCEL_PITCH_BIAS -3.86
-#define ACCEL_ROLL_BIAS -0.14
+#define ACCEL_PITCH_BIAS -1.09
+#define ACCEL_ROLL_BIAS -0.55
 
 // 
 // RADIO CONTROL CALIBRATION PIN
@@ -87,13 +87,13 @@ const uint8_t MOTOR_PINS[MOTORS_COUNT] = {
 // 
 // RADIO CONTROL CALIBRATION VALUES
 // 
-#define ROLL_MIN 1296
-#define ROLL_MAX 1738
-#define PITCH_MIN 1310
-#define PITCH_MAX 1738
-#define THROTTLE_MIN 1082
-#define THROTTLE_MAX 1738
-#define YAW_MIN 1298
-#define YAW_MAX 1740
-#define SWITCH_MIN 982
-#define SWITCH_MAX 1966
+#define ROLL_MIN 1314
+#define ROLL_MAX 1730
+#define PITCH_MIN 1304
+#define PITCH_MAX 1730
+#define THROTTLE_MIN 1070
+#define THROTTLE_MAX 1730
+#define YAW_MIN 1316
+#define YAW_MAX 1732
+#define SWITCH_MIN 976
+#define SWITCH_MAX 1958

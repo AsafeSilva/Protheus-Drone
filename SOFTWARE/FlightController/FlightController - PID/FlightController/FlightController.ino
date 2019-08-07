@@ -13,7 +13,7 @@ github.com/AsafeSilva/Protheus-Drone
 
 > Data de Criação:	18/08/2017
 
-> Última modificação:	05/07/2019
+> Última modificação:	06/08/2019
 
 > Descrição do projeto:
 
@@ -64,8 +64,8 @@ void setup() {
 	// 
 	// Initialize leds for debug
 	// 
-	pinMode(PIN_LED_DEBUG1, OUTPUT); digitalWrite(PIN_LED_DEBUG1, 1);
-	pinMode(PIN_LED_DEBUG2, OUTPUT); digitalWrite(PIN_LED_DEBUG2, 0);
+	pinMode(PIN_LED_ERROR, OUTPUT); digitalWrite(PIN_LED_ERROR, 0);
+	pinMode(PIN_LED_DEBUG, OUTPUT); digitalWrite(PIN_LED_DEBUG, 0);
 	pinMode(PIN_LED_RIGHT, OUTPUT);	digitalWrite(PIN_LED_RIGHT, 0);
 	pinMode(PIN_LED_LEFT, OUTPUT); digitalWrite(PIN_LED_LEFT, 0);
 
@@ -91,8 +91,17 @@ void setup() {
 	// 
 	waitActivation(RadioControl::RollChannel.getInterval(), RadioControl::PitchChannel.getInterval(),
 					 RadioControl::ThrottleChannel.getInterval(), RadioControl::YawChannel.getInterval());
-	if(!IMU::begin()){
-		DroneState = ERROR;
+
+	int imuError = IMU::begin();
+	if(imuError != -1){
+		switch (imuError){
+			case ERROR_MPU_CONNECTION:
+				DroneState = ERROR_MPU_CONNECTION;
+				break;
+			case ERROR_MPU_GYRO:
+				DroneState = ERROR_MPU_GYRO;
+				break;
+		}
 		while(true)
 			ledDebug();
 	}
@@ -150,7 +159,7 @@ void loop() {
 		// Dead band in pitch and roll (+/- 8)
 		float yawSetPoint = 0, pitchSetPoint = 0, rollSetPoint = 0;
 
-		if(RadioControl::ThrottleChannel.read() > 1400){
+		if(RadioControl::ThrottleChannel.read() > 1100){
 			if(yawControl < 1492) yawSetPoint = yawControl - 1492;
 			else if(yawControl > 1508) yawSetPoint = yawControl - 1508;
 		}

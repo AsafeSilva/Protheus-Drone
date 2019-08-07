@@ -161,8 +161,8 @@ private:
 
       if ((millis() - now) % 1000 == 0){
         LOG(".");
-        digitalWrite(PIN_LED_DEBUG1, !digitalRead(PIN_LED_DEBUG1));
-        digitalWrite(PIN_LED_DEBUG2, !digitalRead(PIN_LED_DEBUG2));
+        digitalWrite(PIN_LED_ERROR, !digitalRead(PIN_LED_ERROR));
+        digitalWrite(PIN_LED_DEBUG, !digitalRead(PIN_LED_DEBUG));
       }else{
         LOG("\0");
       }
@@ -170,8 +170,8 @@ private:
       delay(100);
     }
     LOG(NEW_LINE);
-    digitalWrite(PIN_LED_DEBUG1, 0);
-    digitalWrite(PIN_LED_DEBUG2, 0);
+    digitalWrite(PIN_LED_ERROR, 0);
+    digitalWrite(PIN_LED_DEBUG, 0);
 
 
     LOGln(F("--- Calibration values ---"));

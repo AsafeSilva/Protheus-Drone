@@ -43,13 +43,12 @@ float IMU::rollAngle = 0;
 unsigned long IMU::lastComputeTime;
 
 
-bool IMU::begin(){
+int IMU::begin(){
 
 	LOG("\nInitializing Reference System (IMU + Barometer)...\n");
 
 	Wire.setClock(I2C_FREQUENCY);
 	Wire.begin();
-
 
 	// Initialize device
 	imu.initialize();
@@ -59,17 +58,23 @@ bool IMU::begin(){
 
 	if (!imu.testConnection()){
 		LOGln("Could not connect to MPU6050 (Gyro and Accel) :(");
-		return false;
+		return ERROR_MPU_CONNECTION;
 	}
 
-	IMU::GyroCalibrate();
-	IMU::AccelCalibrate();
-	accelPitchBias = ACCEL_PITCH_BIAS;
-	accelRollBias = ACCEL_ROLL_BIAS;
+	// Wait to calibrate gyroscope and accelerometer
+	delay(500);
+
+	IMU::gyroCalibrate();
+	IMU::accelCalibrate();
+
+	if(!testGyroValues()){
+		LOGln("Bias too high on gyro :(");
+		return ERROR_MPU_GYRO;
+	}
 
 	// Set starting angle
-	outCompPitch = accelPitch - accelPitchBias;
-	outCompRoll = accelRoll - accelRollBias;
+	outCompPitch = accelPitch - ACCEL_PITCH_BIAS;
+	outCompRoll = accelRoll - ACCEL_ROLL_BIAS;
 	kalmanPitch.setAngle(outCompPitch);
 	kalmanRoll.setAngle(outCompRoll);
 
@@ -77,7 +82,7 @@ bool IMU::begin(){
 
 	LOGln("MPU6050 was successfully connected :)");
 
-	return true;
+	return -1;
 }
 
 
@@ -117,8 +122,8 @@ void IMU::processKalmanFilter(){
 	accelRoll = -atan2(accelX, sqrt(accelY*accelY + accelZ*accelZ)) * RAD_TO_DEG;
 
 	// Remove offset
-	accelPitch -= accelPitchBias;
-	accelRoll -= accelRollBias;
+	accelPitch -= ACCEL_PITCH_BIAS;
+	accelRoll -= ACCEL_ROLL_BIAS;
 
   	unsigned long time = (millis() - lastComputeTime); 
 	lastComputeTime = millis();
@@ -147,8 +152,8 @@ void IMU::processComplementaryFilter(){
 	accelRoll = -atan2(accelX, sqrt(accelY*accelY + accelZ*accelZ)) * RAD_TO_DEG;
 
 	// Remove offset
-	accelPitch -= accelPitchBias;
-	accelRoll -= accelRollBias;
+	accelPitch -= ACCEL_PITCH_BIAS;
+	accelRoll -= ACCEL_ROLL_BIAS;
 
 	// float lastCompPitch = outCompPitch;
 	// float lastCompRoll = outCompRoll;
@@ -202,7 +207,7 @@ void IMU::debug(){
 	LOG("R: ");	LOG(getRoll());	LOG(NEW_LINE);
 }
 
-void IMU::AccelCalibrate(){
+void IMU::accelCalibrate(){
 
 	for (int i = 0; i < 500; i++){
 
@@ -227,7 +232,7 @@ void IMU::AccelCalibrate(){
 	LOG("#define ACCEL_ROLL_BIAS "); LOG(accelRollBias); LOG(NEW_LINE);
 }
 
-void IMU::GyroCalibrate(){
+void IMU::gyroCalibrate(){
 
 	for (int i = 0; i < 500; i++){
 
@@ -241,4 +246,14 @@ void IMU::GyroCalibrate(){
 	gyroXBias /= 500.0f;
 	gyroYBias /= 500.0f;
 	gyroZBias /= 500.0f;
+}
+
+bool IMU::testGyroValues(){
+	gyroX = (float)(gx - gyroXBias)/65.5f;
+	gyroY = (float)(gy - gyroYBias)/65.5f;
+
+	if(abs(gyroX) > 2.0 || abs(gyroY) > 2.0)
+		return false;
+
+	return true;
 }

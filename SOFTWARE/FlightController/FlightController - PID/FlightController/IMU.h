@@ -24,9 +24,9 @@ private:
 	static float gyroX, gyroY, gyroZ;
 	static float accelX, accelY, accelZ;
 
-	static void AccelCalibrate();
+	static void accelCalibrate();
 	static float accelPitchBias, accelRollBias;
-	static void GyroCalibrate();
+	static void gyroCalibrate();
 	static float gyroXBias, gyroYBias, gyroZBias;
 
 	static float rawGyroPitch, rawGyroRoll, rawGyroYaw;
@@ -39,11 +39,13 @@ private:
 
 	static unsigned long lastComputeTime;
 
+	static bool testGyroValues();
+
 public:
 
 	// Initializes communication and performs sensor configuration
 	// Returns 'true' if the connection was successful
-	static bool begin();
+	static int begin();
 
 	// Performs reading of the sensors
 	// Returns 'true' if the reading was successful
