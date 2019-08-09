@@ -162,10 +162,17 @@ void loop() {
 		if(rollControl < 1492) rollSetPoint = rollControl - 1492;
 		else if(rollControl > 1508) rollSetPoint = rollControl - 1508;
 
-		// Calculate SETPOINT
+		// Calculate SETPOINT (deg/sec)
 		pitchSetPoint = (pitchSetPoint - IMU::getPitch() * 49.2f) / 3.0f; 
 		rollSetPoint = (rollSetPoint - IMU::getRoll() * 49.2f) / 3.0f; 
 		yawSetPoint /= 3.0f;
+
+		// --- These values were obtained from the following calculus
+		/*
+		if(pitchControl < (1500 - deadBand)) pitchSetPoint = pitchControl - (1500 - deadBand);
+		else if(pitchControl > (1500 + deadBand)) pitchSetPoint = pitchControl - (1500 + deadBand);
+		pitchSetPoint = (pitchSetPoint - IMU::getPitch() * ((500 - deadBand)/maxAngle)) / ((500 - deadBand)/maxAngle);
+		*/
 
 
 		// If drone is armed AND throttle is greater than 2%...
