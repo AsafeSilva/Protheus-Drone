@@ -115,7 +115,7 @@ void setup() {
 
 void loop() {
 
-	System::managerDroneState(RadioControl::RollChannel.read(), RadioControl::PitchChannel.read(), RadioControl::ThrottleChannel.read(), RadioControl::YawChannel.read());
+	System::manageDroneState(RadioControl::RollChannel.read(), RadioControl::PitchChannel.read(), RadioControl::ThrottleChannel.read(), RadioControl::YawChannel.read());
 
 	// If drone DISARMED, Stop motors and resetPID
 	if(System::DroneState == DISARMED){
