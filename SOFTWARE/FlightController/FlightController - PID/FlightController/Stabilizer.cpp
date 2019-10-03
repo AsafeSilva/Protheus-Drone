@@ -15,9 +15,17 @@ void Stabilizer::begin(){
 	pidPitch.setLimits(-(MAX_DUTY_CYCLE - MIN_DUTY_CYCLE), (MAX_DUTY_CYCLE - MIN_DUTY_CYCLE));
 	pidRoll.setLimits(-(MAX_DUTY_CYCLE - MIN_DUTY_CYCLE), (MAX_DUTY_CYCLE - MIN_DUTY_CYCLE));
 
-	pidPitch.setParameters(0.080f, 0.001f, 0.020f);
-	pidRoll.setParameters(0.080f, 0.001f, 0.020f);
-	pidYaw.setParameters(0.150f, 0.012f, 0.020f);
+#ifdef PITCH_KP
+	pidPitch.setParameters(PITCH_KP, PITCH_KI, PITCH_KD);
+#endif
+
+#ifdef ROLL_KP
+	pidRoll.setParameters(ROLL_KP, ROLL_KI, ROLL_KD);
+#endif
+
+#ifdef YAW_KP
+	pidYaw.setParameters(YAW_KP, YAW_KI, YAW_KD);
+#endif
 
 	Motors::stop();
 

@@ -97,3 +97,16 @@ const uint8_t MOTOR_PINS[MOTORS_COUNT] = {
 #define YAW_MAX 1732
 #define SWITCH_MIN 976
 #define SWITCH_MAX 1958
+
+// 
+// PID Parameters 
+// 
+#define PITCH_KP	0.080f
+#define PITCH_KI	0.001f
+#define PITCH_KD	0.020f
+#define ROLL_KP	0.080f
+#define ROLL_KI	0.001f
+#define ROLL_KD	0.020f
+#define YAW_KP	0.150f
+#define YAW_KI	0.012f
+#define YAW_KD	0.020f
