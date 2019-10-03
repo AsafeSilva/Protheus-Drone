@@ -5,3 +5,11 @@ Compras.txt
 Artigos/
 Imagens-Artigo/
 SOFTWARE/FlightController - v2.0/FlightController - mpu9250/
+
+*.SLDASM
+
+*.stp
+
+3d/
+
+SOFTWARE/FlightController/FlightController - PID/FlightController/hs_err_pid6048.log
