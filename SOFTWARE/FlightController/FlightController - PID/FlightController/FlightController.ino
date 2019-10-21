@@ -31,6 +31,7 @@ github.com/AsafeSilva/Protheus-Drone
 		- 4° Passo		"Atualizar velocidades dos motores"
 		- 5° Passo		"Comunicação com o sintonizador PID"
 	<> Dependences
+		- I2CDev [https://github.com/jrowberg/i2cdevlib/tree/master/Arduino/I2Cdev]
 		- MPU6050 [github.com/jrowberg/i2cdevlib/tree/master/Arduino/MPU6050]
 		- Kalman [github.com/TKJElectronics/KalmanFilter]	
 
