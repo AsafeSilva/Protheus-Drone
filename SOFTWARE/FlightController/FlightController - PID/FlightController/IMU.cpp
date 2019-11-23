@@ -92,6 +92,8 @@ bool IMU::readData(){
 
 	if (!imu.getIntDataReadyStatus()){
 		LOGln("... IMU data isn't available ...");
+
+		imu.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
 		return false;
 	}
 
