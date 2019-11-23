@@ -97,7 +97,7 @@ void System::manageDroneState(uint32_t roll, uint32_t pitch, uint32_t throttle, 
 
 	}else if(DroneState != DISARMED){
 
-		if((roll > 1900) && (pitch > 1900) && (throttle < 1100) && (yaw > 1900)){
+		if((throttle < 1100) && (yaw > 1900)){
 			LOGln(DroneState != DISARMED ? "STATE: DISARMED!" : "");
 			DroneState = DISARMED;
 		}
