@@ -13,7 +13,7 @@ github.com/AsafeSilva/Protheus-Drone
 
 > Data de Criação:	18/08/2017
 
-> Última modificação:	07/08/2019
+> Última modificação:	23/11/2019
 
 > Descrição do projeto:
 
@@ -104,9 +104,9 @@ void setup() {
 	Stabilizer::begin();
 
 	LOGln();
-	LOGln(F("ARM:             ---- Left Stick: Donw & Right + Right Stick: Down & Left"));
-	LOGln(F("DISARM:          ---- Left Stick: Down & Left + Right Stick: Down & Right"));
-	LOGln(F("ESC_CALIBRATION: ---- Left Stick: Up & Right"));
+	LOGln(F("ARM:             ---- [Left Stick: Donw & Right] + [Right Stick: Down & Left]"));
+	LOGln(F("DISARM:          ---- [Left Stick: Down & Left]"));
+	LOGln(F("ESC_CALIBRATION: ---- [Left Stick: Up & Right]"));
 	LOGln();
 	LOGln(F("\n------------ Let's fly! ------------\n"));
 
@@ -132,33 +132,28 @@ void loop() {
 		return;
 	}
 
-
 	// If the data is ready...
 	if(IMU::readData()){
 
 		// Read Radio Control
 		float throttleSetPoint = mapFloat(RadioControl::ThrottleChannel.read(), 1000, 2000, MIN_DUTY_2FLY, MAX_DUTY_CYCLE);
-		float yawControl = RadioControl::YawChannel.read();
-		float pitchControl = RadioControl::PitchChannel.read();
-		float rollControl = RadioControl::RollChannel.read();
+		float yawControl = constrain(RadioControl::YawChannel.read(), 1000, 2000);
+		float pitchControl = constrain(RadioControl::PitchChannel.read(), 1000, 2000);
+		float rollControl = constrain(RadioControl::RollChannel.read(), 1000, 2000);
 
-		pitchControl -= 0; //RadioControl::PitchChannel.getOffset();
-		rollControl -= 0; //RadioControl::RollChannel.getOffset();
-
-		pitchControl = constrain(pitchControl, 1000, 2000);
-		rollControl = constrain(rollControl, 1000, 2000);
-
-		// Dead band in pitch and roll (+/- 8)
 		float yawSetPoint = 0, pitchSetPoint = 0, rollSetPoint = 0;
 
 		if(RadioControl::ThrottleChannel.read() > 1100){
+			// dead band of +/-8us for better results
 			if(yawControl < 1492) yawSetPoint = yawControl - 1492;
 			else if(yawControl > 1508) yawSetPoint = yawControl - 1508;
 		}
 
+		// dead band of +/-8us for better results
 		if(pitchControl < 1492) pitchSetPoint = pitchControl - 1492;
 		else if(pitchControl > 1508) pitchSetPoint = pitchControl - 1508;
 
+		// dead band of +/-8us for better results
 		if(rollControl < 1492) rollSetPoint = rollControl - 1492;
 		else if(rollControl > 1508) rollSetPoint = rollControl - 1508;
 
@@ -171,33 +166,28 @@ void loop() {
 		/*
 		if(pitchControl < (1500 - deadBand)) pitchSetPoint = pitchControl - (1500 - deadBand);
 		else if(pitchControl > (1500 + deadBand)) pitchSetPoint = pitchControl - (1500 + deadBand);
-		pitchSetPoint = (pitchSetPoint - IMU::getPitch() * ((500 - deadBand)/maxAngle)) / ((500 - deadBand)/maxAngle);
+		pitchSetPoint = (pitchSetPoint - IMU::getPitch() * ((500 - deadBand)/maxAngle)) / ((500 - deadBand)/maxAngularVelocity);
 		*/
 
 
-		// If drone is armed AND throttle is greater than 2%...
-		if((System::DroneState == ARMED) /*&& (RadioControl::ThrottleChannel.read() > 1020)*/){
+		if((System::DroneState == ARMED)){
 
 			// === CALCULATE PID
 			Stabilizer::throttleUpdateSetPoint(throttleSetPoint);
-
+			
 			Stabilizer::yawUpdateSetPoint(yawSetPoint);
 			Stabilizer::yawUpdateInput(IMU::getGyroYaw());
-	
+
 			Stabilizer::pitchUpdateSetPoint(pitchSetPoint);
 			Stabilizer::pitchUpdateInput(IMU::getGyroPitch());
-	
+
 			Stabilizer::rollUpdateSetPoint(rollSetPoint);
 			Stabilizer::rollUpdateInput(IMU::getGyroRoll());
-	
-			Stabilizer::stabilize();
-
-		}/*else if(DroneState == ARMED){
-			Stabilizer::reset();
 			
-			uint32_t powers[] = {MIN_DUTY_2FLY, MIN_DUTY_2FLY, MIN_DUTY_2FLY, MIN_DUTY_2FLY};
-			Motors::setPower(powers);
-		}*/
+			bool throttleInZero = RadioControl::ThrottleChannel.read() < 1020;
+			Stabilizer::stabilize(throttleInZero);
+
+		}
 
 
 		// === LOAD DATA TO INTERFACE

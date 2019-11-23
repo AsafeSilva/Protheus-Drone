@@ -12,6 +12,8 @@ private:
 
 	static unsigned long lastComputeTime;
 
+	static float outThrottle, outYaw, outPitch, outRoll;
+
 public:
 	static PID pidThrottle, pidYaw, pidPitch, pidRoll;
 
@@ -31,5 +33,5 @@ public:
 
 	static void reset();
 
-	static void stabilize();
+	static void stabilize(bool throttleInZero);
 };

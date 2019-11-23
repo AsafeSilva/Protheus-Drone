@@ -77,7 +77,7 @@ float PID::compute(float dTime){
 }
 
 void PID::reset(){
-	P = I = D = 0;
+	P = I = D = output = 0;
 }
 
 float PID::getKP(){return kP;}

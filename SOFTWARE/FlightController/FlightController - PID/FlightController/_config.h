@@ -71,8 +71,8 @@ const uint8_t MOTOR_PINS[MOTORS_COUNT] = {
 // 
 // IMU CONFIGS
 // 
-#define ACCEL_PITCH_BIAS -1.09
-#define ACCEL_ROLL_BIAS -0.55
+#define ACCEL_PITCH_BIAS -1.08
+#define ACCEL_ROLL_BIAS 0.67
 
 // 
 // RADIO CONTROL CALIBRATION PIN
@@ -87,16 +87,16 @@ const uint8_t MOTOR_PINS[MOTORS_COUNT] = {
 // 
 // RADIO CONTROL CALIBRATION VALUES
 // 
-#define ROLL_MIN 1314
-#define ROLL_MAX 1730
-#define PITCH_MIN 1304
-#define PITCH_MAX 1730
-#define THROTTLE_MIN 1070
-#define THROTTLE_MAX 1730
-#define YAW_MIN 1316
-#define YAW_MAX 1732
+#define ROLL_MIN 1144
+#define ROLL_MAX 1978
+#define PITCH_MIN 1128
+#define PITCH_MAX 1978
+#define THROTTLE_MIN 1104
+#define THROTTLE_MAX 1980
+#define YAW_MIN 1148
+#define YAW_MAX 1980
 #define SWITCH_MIN 976
-#define SWITCH_MAX 1958
+#define SWITCH_MAX 1956
 
 // 
 // PID Parameters 

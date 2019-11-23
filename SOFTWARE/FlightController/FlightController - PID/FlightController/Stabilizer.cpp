@@ -4,6 +4,10 @@ PID Stabilizer::pidThrottle;
 PID Stabilizer::pidYaw;
 PID Stabilizer::pidPitch;
 PID Stabilizer::pidRoll;
+float Stabilizer::outThrottle = 0;
+float Stabilizer::outYaw = 0;
+float Stabilizer::outPitch = 0;
+float Stabilizer::outRoll = 0;
 
 unsigned long Stabilizer::lastComputeTime;
 
@@ -71,16 +75,23 @@ void Stabilizer::reset(){
 	pidRoll.reset();
 }
 
-void Stabilizer::stabilize(){
+void Stabilizer::stabilize(bool throttleInZero){
 
 	unsigned long time = (millis() - lastComputeTime); 
 	lastComputeTime = millis();
 	float dt = time/1000.0f;
 
-	float outThrottle = pidThrottle.getSetPoint();
-	float outYaw = pidYaw.compute(dt);
-	float outPitch = pidPitch.compute(dt);
-	float outRoll = pidRoll.compute(dt);
+	outThrottle = pidThrottle.getSetPoint();
+	outYaw = pidYaw.compute(dt);
+	outPitch = pidPitch.compute(dt);
+	outRoll = pidRoll.compute(dt);
+
+	if(throttleInZero){
+		outYaw = outPitch = outRoll = 0;
+		pidYaw.reset();
+		pidPitch.reset();
+		pidRoll.reset();
+	}
 
 	uint32_t m1 = outThrottle - outPitch + outRoll - outYaw;
 	uint32_t m2 = outThrottle - outPitch - outRoll + outYaw;
