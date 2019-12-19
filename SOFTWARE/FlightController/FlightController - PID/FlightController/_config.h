@@ -77,12 +77,27 @@ const uint8_t MOTOR_PINS[MOTORS_COUNT] = {
 // 
 // RADIO CONTROL CALIBRATION PIN
 // 
-#define PIN_RADIO_CALIB 13
+#define PIN_RADIO_CALIB	13
 
 // 
 // RADIO CONTROL CALIBRATION TIME
 // 
 #define TIME_CALIBRATION  10000  // ms
+
+// 
+// RADIO CONTROL VALUES
+// 
+#define MIN_RC_VALUE	1000
+#define MID_RC_VALUE	1500
+#define MAX_RC_VALUE	2000
+#define RC_DEAD_BAND	8
+
+// 
+// FLIGHT PARAMETERS
+// 
+#define MAX_ANGLE	10
+#define MAX_ANGULAR_VELOCITY	164
+
 
 // 
 // RADIO CONTROL CALIBRATION VALUES
@@ -101,11 +116,11 @@ const uint8_t MOTOR_PINS[MOTORS_COUNT] = {
 // 
 // PID Parameters 
 // 
-#define PITCH_KP	0.080f
-#define PITCH_KI	0.001f
+#define PITCH_KP	0.085f
+#define PITCH_KI	0.002f
 #define PITCH_KD	0.020f
-#define ROLL_KP	0.080f
-#define ROLL_KI	0.001f
+#define ROLL_KP	0.085f
+#define ROLL_KI	0.002f
 #define ROLL_KD	0.020f
 #define YAW_KP	0.150f
 #define YAW_KI	0.012f

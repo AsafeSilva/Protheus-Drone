@@ -124,7 +124,7 @@ void loop() {
 
 		Motors::stop();
 	}else if(System::DroneState == ESC_CALIBRATION){
-		float throttle = mapFloat(RadioControl::ThrottleChannel.read(), 1000, 2000, MIN_DUTY_CYCLE, MAX_DUTY_CYCLE);
+		float throttle = mapFloat(RadioControl::ThrottleChannel.read(), MIN_RC_VALUE, MAX_RC_VALUE, MIN_DUTY_CYCLE, MAX_DUTY_CYCLE);
 		uint32_t powers[] = {throttle, throttle, throttle, throttle};
 		Motors::setPower(powers);
 
@@ -137,38 +137,36 @@ void loop() {
 	if(IMU::readData()){
 
 		// Read Radio Control
-		float throttleSetPoint = mapFloat(RadioControl::ThrottleChannel.read(), 1000, 2000, MIN_DUTY_2FLY, MAX_DUTY_CYCLE);
-		float yawControl = constrain(RadioControl::YawChannel.read(), 1000, 2000);
-		float pitchControl = constrain(RadioControl::PitchChannel.read(), 1000, 2000);
-		float rollControl = constrain(RadioControl::RollChannel.read(), 1000, 2000);
+		float throttleSetPoint = mapFloat(RadioControl::ThrottleChannel.read(), MIN_RC_VALUE, MAX_RC_VALUE, MIN_DUTY_2FLY, MAX_DUTY_CYCLE);
+		float yawControl = constrain(RadioControl::YawChannel.read(), MIN_RC_VALUE, MAX_RC_VALUE);
+		float pitchControl = constrain(RadioControl::PitchChannel.read(), MIN_RC_VALUE, MAX_RC_VALUE);
+		float rollControl = constrain(RadioControl::RollChannel.read(), MIN_RC_VALUE, MAX_RC_VALUE);
 
 		float yawSetPoint = 0, pitchSetPoint = 0, rollSetPoint = 0;
 
 		if(RadioControl::ThrottleChannel.read() > 1100){
-			// dead band of +/-8us for better results
-			if(yawControl < 1492) yawSetPoint = yawControl - 1492;
-			else if(yawControl > 1508) yawSetPoint = yawControl - 1508;
+			// dead band for better results
+			if(yawControl < (MID_RC_VALUE - RC_DEAD_BAND)) yawSetPoint = yawControl - (MID_RC_VALUE - RC_DEAD_BAND);
+			else if(yawControl > (MID_RC_VALUE + RC_DEAD_BAND)) yawSetPoint = yawControl - (MID_RC_VALUE + RC_DEAD_BAND);
 		}
 
-		// dead band of +/-8us for better results
-		if(pitchControl < 1492) pitchSetPoint = pitchControl - 1492;
-		else if(pitchControl > 1508) pitchSetPoint = pitchControl - 1508;
+		// dead band for better results
+		if(pitchControl < (MID_RC_VALUE - RC_DEAD_BAND)) pitchSetPoint = pitchControl - (MID_RC_VALUE - RC_DEAD_BAND);
+		else if(pitchControl > (MID_RC_VALUE + RC_DEAD_BAND)) pitchSetPoint = pitchControl - (MID_RC_VALUE + RC_DEAD_BAND);
 
-		// dead band of +/-8us for better results
-		if(rollControl < 1492) rollSetPoint = rollControl - 1492;
-		else if(rollControl > 1508) rollSetPoint = rollControl - 1508;
+		// dead band for better results
+		if(rollControl < (MID_RC_VALUE - RC_DEAD_BAND)) rollSetPoint = rollControl - (MID_RC_VALUE - RC_DEAD_BAND);
+		else if(rollControl > (MID_RC_VALUE + RC_DEAD_BAND)) rollSetPoint = rollControl - (MID_RC_VALUE + RC_DEAD_BAND);
 
 		// Calculate SETPOINT (deg/sec)
-		pitchSetPoint = (pitchSetPoint - IMU::getPitch() * 49.2f) / 3.0f; 
-		rollSetPoint = (rollSetPoint - IMU::getRoll() * 49.2f) / 3.0f; 
-		yawSetPoint /= 3.0f;
+		pitchSetPoint -= IMU::getPitch() * (((MID_RC_VALUE - MIN_RC_VALUE) - RC_DEAD_BAND)/MAX_ANGLE);
+		pitchSetPoint /= ((MID_RC_VALUE - MIN_RC_VALUE) - RC_DEAD_BAND)/MAX_ANGULAR_VELOCITY;
 
-		// --- These values were obtained from the following calculus
-		/*
-		if(pitchControl < (1500 - deadBand)) pitchSetPoint = pitchControl - (1500 - deadBand);
-		else if(pitchControl > (1500 + deadBand)) pitchSetPoint = pitchControl - (1500 + deadBand);
-		pitchSetPoint = (pitchSetPoint - IMU::getPitch() * ((500 - deadBand)/maxAngle)) / ((500 - deadBand)/maxAngularVelocity);
-		*/
+		rollSetPoint -= IMU::getRoll() * (((MID_RC_VALUE - MIN_RC_VALUE) - RC_DEAD_BAND)/MAX_ANGLE);
+		rollSetPoint /= ((MID_RC_VALUE - MIN_RC_VALUE) - RC_DEAD_BAND)/MAX_ANGULAR_VELOCITY;
+
+		yawSetPoint /= ((MID_RC_VALUE - MIN_RC_VALUE) - RC_DEAD_BAND)/MAX_ANGULAR_VELOCITY;
+
 
 
 		if((System::DroneState == ARMED)){
@@ -195,9 +193,9 @@ void loop() {
 		DataToSend[SendID::YAW_IN] = IMU::getGyroYaw();
 		DataToSend[SendID::YAW_SET] = yawSetPoint;
 		DataToSend[SendID::PITCH_IN] = IMU::getPitch();
-		DataToSend[SendID::PITCH_SET] = mapFloat(pitchControl, 1000, 2000, -10, 10);
+		DataToSend[SendID::PITCH_SET] = mapFloat(pitchControl, MIN_RC_VALUE, MAX_RC_VALUE, -MAX_ANGLE, MAX_ANGLE);
 		DataToSend[SendID::ROLL_IN] = IMU::getRoll();
-		DataToSend[SendID::ROLL_SET] = mapFloat(rollControl, 1000, 2000, -10, 10);
+		DataToSend[SendID::ROLL_SET] = mapFloat(rollControl, MIN_RC_VALUE, MAX_RC_VALUE, -MAX_ANGLE, MAX_ANGLE);
 		DataToSend[SendID::M1_VEL] = *(Motors::getPercentPower());
 		DataToSend[SendID::M2_VEL] = *(Motors::getPercentPower()+1);
 		DataToSend[SendID::M3_VEL] = *(Motors::getPercentPower()+2);
